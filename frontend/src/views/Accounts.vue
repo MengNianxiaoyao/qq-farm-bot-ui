@@ -167,7 +167,7 @@ function handleSaved() {
             </BaseButton>
             <BaseButton
               variant="ghost"
-              class="!p-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+              class="text-red-500 !p-2 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
               title="删除"
               @click="handleDelete(acc)"
             >

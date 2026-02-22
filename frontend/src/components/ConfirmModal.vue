@@ -20,11 +20,11 @@ const emit = defineEmits<{
 
 <template>
   <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-opacity" @click="emit('cancel')">
-    <div class="w-full max-w-sm scale-100 transform rounded-xl bg-white p-6 shadow-2xl transition-all dark:bg-gray-800" @click.stop>
-      <h3 class="mb-3 text-xl font-bold text-gray-900 dark:text-gray-100">
+    <div class="max-w-sm w-full scale-100 transform rounded-xl bg-white p-6 shadow-2xl transition-all dark:bg-gray-800" @click.stop>
+      <h3 class="mb-3 text-xl text-gray-900 font-bold dark:text-gray-100">
         {{ title || '确认操作' }}
       </h3>
-      <p class="mb-8 leading-relaxed text-gray-600 dark:text-gray-400">
+      <p class="mb-8 text-gray-600 leading-relaxed dark:text-gray-400">
         {{ message || '确定要执行此操作吗？' }}
       </p>
       <div class="flex justify-end gap-3">

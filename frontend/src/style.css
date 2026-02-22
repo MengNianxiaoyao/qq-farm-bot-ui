@@ -29,7 +29,8 @@
 }
 
 /* Base styles to reset some defaults if needed, though UnoCSS reset handles most */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -43,5 +44,7 @@ html, body {
 }
 
 #nprogress .peg {
-  box-shadow: 0 0 10px #10b981, 0 0 5px #10b981 !important;
+  box-shadow:
+    0 0 10px #10b981,
+    0 0 5px #10b981 !important;
 }

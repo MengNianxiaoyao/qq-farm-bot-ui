@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import api from '@/api'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
-import api from '@/api'
 
 const props = defineProps<{
   show: boolean

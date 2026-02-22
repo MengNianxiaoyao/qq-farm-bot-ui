@@ -32,7 +32,6 @@ const { sidebarOpen } = storeToRefs(appStore)
         </button>
       </header>
 
-
       <!-- Main Content Area -->
       <div class="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-6">
         <div class="mx-auto max-w-7xl">

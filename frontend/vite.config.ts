@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
-import UnoCSS from 'unocss/vite'
 import { visualizer } from 'rollup-plugin-visualizer'
-import viteCompression from 'vite-plugin-compression'
+import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vite'
+import viteCompression from 'vite-plugin-compression'
 
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
 

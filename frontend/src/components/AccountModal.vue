@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
 import { computed, reactive, ref, watch } from 'vue'
+import api from '@/api'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
-import BaseTextarea from '@/components/ui/BaseTextarea.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
-import api from '@/api'
+import BaseTextarea from '@/components/ui/BaseTextarea.vue'
 
 const props = defineProps<{
   show: boolean
@@ -25,33 +25,6 @@ const form = reactive({
   code: '',
   platform: 'qq',
 })
-
-// QR Code Logic
-async function loadQRCode() {
-  if (activeTab.value !== 'qr')
-    return
-  loading.value = true
-  qrStatus.value = '正在获取二维码'
-  errorMessage.value = ''
-  try {
-    const res = await api.post('/api/qr/create')
-    if (res.data.ok) {
-      qrData.value = res.data.data
-      qrStatus.value = '请使用手机QQ扫码'
-      startQRCheck()
-    }
-    else {
-      qrStatus.value = `获取失败: ${res.data.error}`
-    }
-  }
-  catch (e) {
-    qrStatus.value = '获取失败'
-    console.error(e)
-  }
-  finally {
-    loading.value = false
-  }
-}
 
 const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(async () => {
   if (!qrData.value)
@@ -100,6 +73,33 @@ const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(async () => {
     console.error(e)
   }
 }, 1000, { immediate: false })
+
+// QR Code Logic
+async function loadQRCode() {
+  if (activeTab.value !== 'qr')
+    return
+  loading.value = true
+  qrStatus.value = '正在获取二维码'
+  errorMessage.value = ''
+  try {
+    const res = await api.post('/api/qr/create')
+    if (res.data.ok) {
+      qrData.value = res.data.data
+      qrStatus.value = '请使用手机QQ扫码'
+      startQRCheck()
+    }
+    else {
+      qrStatus.value = `获取失败: ${res.data.error}`
+    }
+  }
+  catch (e) {
+    qrStatus.value = '获取失败'
+    console.error(e)
+  }
+  finally {
+    loading.value = false
+  }
+}
 
 const isMobile = computed(() => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent))
 

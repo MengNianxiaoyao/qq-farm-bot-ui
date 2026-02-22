@@ -156,7 +156,6 @@ function getSafeImageUrl(url: string) {
     return url.replace('http://', 'https://')
   return url
 }
-
 </script>
 
 <template>

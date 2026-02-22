@@ -24,7 +24,7 @@ api.interceptors.response.use((response) => {
   return response
 }, (error) => {
   const toast = useToastStore()
-  
+
   if (error.response) {
     if (error.response.status === 401) {
       // Avoid redirect loop or multiple redirects
@@ -33,20 +33,24 @@ api.interceptors.response.use((response) => {
         window.location.href = '/login'
         toast.warning('登录已过期，请重新登录')
       }
-    } else if (error.response.status >= 500) {
+    }
+    else if (error.response.status >= 500) {
       toast.error(`服务器错误: ${error.response.status} ${error.response.statusText}`)
-    } else {
+    }
+    else {
       const msg = error.response.data?.message || error.message
-      // Don't show toast for 404 if it's expected in some logic? 
+      // Don't show toast for 404 if it's expected in some logic?
       // Generally for API calls, 404 is an error.
       toast.error(`请求失败: ${msg}`)
     }
-  } else if (error.request) {
+  }
+  else if (error.request) {
     toast.error('网络错误，无法连接到服务器')
-  } else {
+  }
+  else {
     toast.error(`错误: ${error.message}`)
   }
-  
+
   return Promise.reject(error)
 })
 

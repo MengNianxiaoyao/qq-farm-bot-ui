@@ -3,9 +3,9 @@ import { useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseCheckbox from '@/components/ui/BaseCheckbox.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
-import BaseCheckbox from '@/components/ui/BaseCheckbox.vue'
 import { useAccountStore } from '@/stores/account'
 import { useBagStore } from '@/stores/bag'
 import { useStatusStore } from '@/stores/status'
@@ -438,7 +438,7 @@ useIntervalFn(updateCountdowns, 1000)
     </div>
 
     <!-- Main Content Flex -->
-    <div class="flex flex-col gap-6 lg:flex-row items-stretch">
+    <div class="flex flex-col items-stretch gap-6 lg:flex-row">
       <!-- Logs (Left Column) -->
       <div class="flex flex-col rounded-lg bg-white p-6 shadow lg:w-3/4 dark:bg-gray-800">
         <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

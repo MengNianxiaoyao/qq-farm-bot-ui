@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-const model = defineModel<string | number>()
-
 const props = defineProps<{
   label?: string
   options?: { label: string, value: string | number, disabled?: boolean }[]
@@ -13,6 +11,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'change', value: string | number): void
 }>()
+
+const model = defineModel<string | number>()
 
 const isOpen = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
@@ -51,13 +51,13 @@ onUnmounted(() => {
 
 <template>
   <div ref="containerRef" class="flex flex-col gap-1.5">
-    <label v-if="label" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label v-if="label" class="text-sm text-gray-700 font-medium dark:text-gray-300">
       {{ label }}
     </label>
     <div class="relative">
       <!-- Trigger -->
       <div
-        class="flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 outline-none transition-all duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+        class="w-full flex cursor-pointer items-center justify-between border border-gray-200 rounded-lg bg-white px-3 py-2 outline-none transition-all duration-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
         :class="{
           'bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800/50': disabled,
           'ring-2 ring-green-500/20 border-green-500 dark:focus:border-green-500': isOpen,
@@ -80,7 +80,7 @@ onUnmounted(() => {
       >
         <div
           v-if="isOpen"
-          class="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          class="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-auto border border-gray-200 rounded-lg bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
         >
           <template v-if="options?.length">
             <div

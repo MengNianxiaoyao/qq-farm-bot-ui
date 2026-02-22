@@ -1,8 +1,8 @@
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
+import { useToastStore } from '@/stores/toast'
 import App from './App.vue'
 import router from './router'
-import { useToastStore } from '@/stores/toast'
 import '@unocss/reset/tailwind.css'
 import 'virtual:uno.css'
 import './style.css'
@@ -20,14 +20,16 @@ app.config.errorHandler = (err: any, _instance, info) => {
   console.error('Global Vue Error:', err, info)
   const message = err.message || String(err)
   // Ignore some benign errors if needed
-  if (message.includes('ResizeObserver loop')) return
+  if (message.includes('ResizeObserver loop'))
+    return
   toast.error(`应用错误: ${message}`)
 }
 
 window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason
   // Ignore axios errors as they are handled in interceptors
-  if (reason && typeof reason === 'object' && 'isAxiosError' in reason) return
+  if (reason && typeof reason === 'object' && 'isAxiosError' in reason)
+    return
 
   console.error('Unhandled Rejection:', reason)
   const message = reason?.message || String(reason)
@@ -37,7 +39,8 @@ window.addEventListener('unhandledrejection', (event) => {
 window.onerror = (message, _source, _lineno, _colno, error) => {
   console.error('Global Error:', message, error)
   // Script error. usually cross-origin
-  if (String(message).includes('Script error')) return
+  if (String(message).includes('Script error'))
+    return
   toast.error(`系统错误: ${message}`)
 }
 

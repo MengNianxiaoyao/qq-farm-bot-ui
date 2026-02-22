@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import NProgress from 'nprogress'
-import 'nprogress/nprogress.css'
+import { createRouter, createWebHistory } from 'vue-router'
 import { menuRoutes } from './menu'
+import 'nprogress/nprogress.css'
 
 NProgress.configure({ showSpinner: false })
 

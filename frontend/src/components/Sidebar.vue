@@ -5,9 +5,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api'
 import AccountModal from '@/components/AccountModal.vue'
-import { menuRoutes } from '@/router/menu'
-
 import RemarkModal from '@/components/RemarkModal.vue'
+
+import { menuRoutes } from '@/router/menu'
 import { useAccountStore } from '@/stores/account'
 import { useAppStore } from '@/stores/app'
 import { useStatusStore } from '@/stores/status'
@@ -49,14 +49,14 @@ async function checkConnection() {
 async function refreshStatus() {
   if (currentAccount.value?.uin) {
     await statusStore.fetchStatus(String(currentAccount.value.uin))
-    
+
     // Check for WS Error (400 = Code Expired)
     const wsError = status.value?.wsError
     if (wsError && Number(wsError.code) === 400 && currentAccount.value) {
       const errAt = Number(wsError.at) || 0
       const accId = String(currentAccount.value.uin)
       const lastNotified = wsErrorNotifiedAt.value[accId] || 0
-      
+
       if (errAt > lastNotified) {
         wsErrorNotifiedAt.value[accId] = errAt
         // Trigger re-login (AccountModal in edit mode)
@@ -177,7 +177,7 @@ watch(
 
 <template>
   <aside
-    class="fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 dark:border-gray-700 dark:bg-gray-800 lg:static lg:translate-x-0"
+    class="fixed inset-y-0 left-0 z-50 h-full w-64 flex flex-col border-r border-gray-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0 dark:border-gray-700 dark:bg-gray-800"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
   >
     <!-- Brand -->

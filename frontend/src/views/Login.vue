@@ -2,9 +2,9 @@
 import { useStorage } from '@vueuse/core'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '@/api'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
-import api from '@/api'
 
 const router = useRouter()
 const password = ref('')

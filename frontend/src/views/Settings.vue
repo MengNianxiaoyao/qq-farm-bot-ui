@@ -268,15 +268,15 @@ async function handleSaveOffline() {
       <p>加载中...</p>
     </div>
 
-    <div v-else class="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2 text-sm">
+    <div v-else class="grid grid-cols-1 mt-12 gap-4 text-sm lg:grid-cols-2">
       <!-- Card 1: Strategy & Automation -->
-      <div v-if="currentAccountId" class="card flex flex-col h-full rounded-lg bg-white shadow dark:bg-gray-800">
+      <div v-if="currentAccountId" class="card h-full flex flex-col rounded-lg bg-white shadow dark:bg-gray-800">
         <!-- Strategy Header -->
-        <div class="border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+        <div class="border-b bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base text-gray-900 font-bold dark:text-gray-100">
             <div class="i-fas-cogs" />
             策略设置
-            <span v-if="currentAccountName" class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+            <span v-if="currentAccountName" class="ml-2 text-sm text-gray-500 font-normal dark:text-gray-400">
               ({{ currentAccountName }})
             </span>
           </h3>
@@ -284,7 +284,7 @@ async function handleSaveOffline() {
 
         <!-- Strategy Content -->
         <div class="p-4 space-y-3">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             <BaseSelect
               v-model="localSettings.plantingStrategy"
               label="种植策略"
@@ -298,7 +298,7 @@ async function handleSaveOffline() {
             />
           </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
             <BaseInput
               v-model.number="localSettings.intervals.farmMin"
               label="农场巡查最小 (秒)"
@@ -325,7 +325,7 @@ async function handleSaveOffline() {
             />
           </div>
 
-          <div class="flex flex-wrap items-center gap-4 pt-1 border-t dark:border-gray-700">
+          <div class="flex flex-wrap items-center gap-4 border-t pt-1 dark:border-gray-700">
             <BaseSwitch
               v-model="localSettings.friendQuietHours.enabled"
               label="启用静默时段"
@@ -349,17 +349,17 @@ async function handleSaveOffline() {
         </div>
 
         <!-- Auto Control Header -->
-        <div class="border-t border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+        <div class="border-b border-t bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base text-gray-900 font-bold dark:text-gray-100">
             <div class="i-fas-toggle-on" />
             自动控制
           </h3>
         </div>
 
         <!-- Auto Control Content -->
-        <div class="p-4 space-y-4 flex-1">
+        <div class="flex-1 p-4 space-y-4">
           <!-- Switches Grid -->
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
             <BaseSwitch v-model="localSettings.automation.farm" label="自动种植收获" />
             <BaseSwitch v-model="localSettings.automation.task" label="自动做任务" />
             <BaseSwitch v-model="localSettings.automation.sell" label="自动卖果实" />
@@ -369,7 +369,7 @@ async function handleSaveOffline() {
           </div>
 
           <!-- Sub-controls -->
-          <div v-if="localSettings.automation.friend" class="flex flex-wrap gap-4 rounded bg-blue-50 p-2 dark:bg-blue-900/20 text-sm">
+          <div v-if="localSettings.automation.friend" class="flex flex-wrap gap-4 rounded bg-blue-50 p-2 text-sm dark:bg-blue-900/20">
             <BaseSwitch v-model="localSettings.automation.friend_steal" label="自动偷菜" />
             <BaseSwitch v-model="localSettings.automation.friend_help" label="自动帮忙" />
             <BaseSwitch v-model="localSettings.automation.friend_bad" label="自动捣乱" />
@@ -387,7 +387,7 @@ async function handleSaveOffline() {
         </div>
 
         <!-- Save Button -->
-        <div class="border-t px-4 py-3 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end mt-auto">
+        <div class="mt-auto flex justify-end border-t bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/50">
           <BaseButton
             variant="primary"
             size="sm"
@@ -404,10 +404,10 @@ async function handleSaveOffline() {
       </div>
 
       <!-- Card 2: System Settings (Password & Offline) -->
-      <div class="card flex flex-col h-full rounded-lg bg-white shadow dark:bg-gray-800">
+      <div class="card h-full flex flex-col rounded-lg bg-white shadow dark:bg-gray-800">
         <!-- Password Header -->
-        <div class="border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+        <div class="border-b bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base text-gray-900 font-bold dark:text-gray-100">
             <div class="i-carbon-password" />
             管理密码
           </h3>
@@ -415,7 +415,7 @@ async function handleSaveOffline() {
 
         <!-- Password Content -->
         <div class="p-4 space-y-3">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
             <BaseInput
               v-model="passwordForm.old"
               label="当前密码"
@@ -435,9 +435,11 @@ async function handleSaveOffline() {
               placeholder="再次输入新密码"
             />
           </div>
-          
+
           <div class="flex items-center justify-between pt-1">
-            <p class="text-xs text-gray-500">建议修改默认密码 (admin)</p>
+            <p class="text-xs text-gray-500">
+              建议修改默认密码 (admin)
+            </p>
             <BaseButton
               variant="primary"
               size="sm"
@@ -450,16 +452,16 @@ async function handleSaveOffline() {
         </div>
 
         <!-- Offline Header -->
-        <div class="border-t border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+        <div class="border-b border-t bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base text-gray-900 font-bold dark:text-gray-100">
             <div class="i-carbon-notification" />
             下线提醒
           </h3>
         </div>
 
         <!-- Offline Content -->
-        <div class="p-4 space-y-3 flex-1">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="flex-1 p-4 space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             <BaseSelect
               v-model="localOffline.channel"
               label="推送渠道"
@@ -486,7 +488,7 @@ async function handleSaveOffline() {
             placeholder="接收端 token"
           />
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             <BaseInput
               v-model="localOffline.title"
               label="标题"
@@ -501,7 +503,7 @@ async function handleSaveOffline() {
               placeholder="默认 120"
             />
           </div>
-          
+
           <BaseInput
             v-model="localOffline.msg"
             label="内容"
@@ -511,7 +513,7 @@ async function handleSaveOffline() {
         </div>
 
         <!-- Save Offline Button -->
-        <div class="border-t px-4 py-3 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end mt-auto">
+        <div class="mt-auto flex justify-end border-t bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/50">
           <BaseButton
             variant="primary"
             size="sm"

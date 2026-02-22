@@ -12,9 +12,25 @@ export interface Toast {
 
 export const useToastStore = defineStore('toast', () => {
   const toasts = ref<Toast[]>([])
+  const recentMessages = new Set<string>()
   let nextId = 1
 
   function add(message: string, type: ToastType = 'info', duration = 3000) {
+    const key = `${type}:${message}`
+
+    // Prevent duplicate toasts if one with the same message and type is already visible
+    if (toasts.value.some(t => t.message === message && t.type === type)) {
+      return
+    }
+
+    // Prevent rapid re-appearance (debounce)
+    if (recentMessages.has(key)) {
+      return
+    }
+
+    recentMessages.add(key)
+    setTimeout(() => recentMessages.delete(key), 2000)
+
     const id = nextId++
     const toast: Toast = { id, message, type, duration }
     toasts.value.push(toast)

@@ -1,9 +1,21 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import Sidebar from '@/components/Sidebar.vue'
+import { useAppStore } from '@/stores/app'
+
+const appStore = useAppStore()
+const { sidebarOpen } = storeToRefs(appStore)
 </script>
 
 <template>
   <div class="h-screen w-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <!-- Mobile Sidebar Overlay -->
+    <div
+      v-if="sidebarOpen"
+      class="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm transition-opacity lg:hidden"
+      @click="appStore.closeSidebar"
+    />
+
     <Sidebar />
 
     <main class="relative h-full min-w-0 flex flex-1 flex-col overflow-hidden">
@@ -12,8 +24,14 @@ import Sidebar from '@/components/Sidebar.vue'
         <div class="text-lg font-bold">
           QQ农场智能助手
         </div>
-        <!-- Mobile menu toggle would go here -->
+        <button
+          class="flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+          @click="appStore.toggleSidebar"
+        >
+          <div class="i-carbon-menu text-xl" />
+        </button>
       </header>
+
 
       <!-- Main Content Area -->
       <div class="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-6">

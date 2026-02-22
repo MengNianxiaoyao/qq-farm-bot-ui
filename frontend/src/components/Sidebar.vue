@@ -2,17 +2,22 @@
 import { useDateFormat, useNow } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/api'
 import AccountModal from '@/components/AccountModal.vue'
 
 import RemarkModal from '@/components/RemarkModal.vue'
 import { useAccountStore } from '@/stores/account'
+import { useAppStore } from '@/stores/app'
 import { useStatusStore } from '@/stores/status'
 
 const accountStore = useAccountStore()
 const statusStore = useStatusStore()
+const appStore = useAppStore()
+const route = useRoute()
 const { accounts, currentAccount } = storeToRefs(accountStore)
 const { status } = storeToRefs(statusStore)
+const { sidebarOpen } = storeToRefs(appStore)
 
 const showAccountDropdown = ref(false)
 const showAccountModal = ref(false)
@@ -171,16 +176,37 @@ function selectAccount(acc: any) {
 }
 
 const version = __APP_VERSION__
+
+watch(
+  () => route.path,
+  () => {
+    // Close sidebar on route change (mobile only)
+    if (window.innerWidth < 1024)
+      appStore.closeSidebar()
+  },
+)
 </script>
 
 <template>
-  <aside class="h-full w-64 flex flex-col border-r border-gray-200 bg-white transition-colors duration-300 dark:border-gray-700 dark:bg-gray-800">
+  <aside
+    class="fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-300 dark:border-gray-700 dark:bg-gray-800 lg:static lg:translate-x-0"
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
     <!-- Brand -->
-    <div class="h-16 flex items-center gap-3 border-b border-gray-100 px-6 dark:border-gray-700/50">
-      <div class="i-carbon-sprout text-2xl text-green-500" />
-      <span class="from-green-600 to-emerald-500 bg-gradient-to-r bg-clip-text text-lg text-transparent font-bold">
-        QQ农场智能助手
-      </span>
+    <div class="h-16 flex items-center justify-between border-b border-gray-100 px-6 dark:border-gray-700/50">
+      <div class="flex items-center gap-3">
+        <div class="i-carbon-sprout text-2xl text-green-500" />
+        <span class="from-green-600 to-emerald-500 bg-gradient-to-r bg-clip-text text-lg text-transparent font-bold">
+          QQ农场智能助手
+        </span>
+      </div>
+      <!-- Mobile Close Button -->
+      <button
+        class="rounded-lg p-1 text-gray-500 lg:hidden hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+        @click="appStore.closeSidebar"
+      >
+        <div class="i-carbon-close text-xl" />
+      </button>
     </div>
 
     <!-- Account Selector -->

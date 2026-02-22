@@ -2,6 +2,10 @@
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, watch } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import { useAccountStore } from '@/stores/account'
 import { useFarmStore } from '@/stores/farm'
 import { useSettingStore } from '@/stores/setting'
@@ -126,6 +130,51 @@ watch(currentAccountId, () => {
   loadData()
 })
 
+const fertilizerOptions = [
+  { label: '普通 + 有机', value: 'both' },
+  { label: '仅普通化肥', value: 'normal' },
+  { label: '仅有机化肥', value: 'organic' },
+  { label: '不施肥', value: 'none' },
+]
+
+const plantingStrategyOptions = [
+  { label: '优先种植种子 (下方选择)', value: 'preferred' },
+  { label: '最高等级作物', value: 'level' },
+  { label: '最大经验/时', value: 'max_exp' },
+  { label: '最大普通肥经验/时', value: 'max_fert_exp' },
+  { label: '最大净利润/时', value: 'max_profit' },
+  { label: '最大普通肥净利润/时', value: 'max_fert_profit' },
+]
+
+const channelOptions = [
+  { label: 'webhook (自定义接口)', value: 'webhook' },
+  { label: 'qmsg', value: 'qmsg' },
+  { label: 'serverchan', value: 'serverchan' },
+  { label: 'pushplus', value: 'pushplus' },
+  { label: 'dingtalk', value: 'dingtalk' },
+  { label: 'wecom', value: 'wecom' },
+  { label: 'bark', value: 'bark' },
+  { label: 'telegram', value: 'telegram' },
+]
+
+const reloginUrlModeOptions = [
+  { label: '不需要', value: 'none' },
+  { label: 'QQ直链', value: 'qq_link' },
+  { label: '二维码链接', value: 'qr_link' },
+]
+
+const preferredSeedOptions = computed(() => {
+  const options = [{ label: '自动选择', value: 0 }]
+  if (seeds.value) {
+    options.push(...seeds.value.map(seed => ({
+      label: `${seed.requiredLevel}级 ${seed.name} (${seed.price}金)`,
+      value: seed.seedId,
+      disabled: seed.locked || seed.soldOut,
+    })))
+  }
+  return options
+})
+
 async function saveAccountSettings() {
   if (!currentAccountId.value)
     return
@@ -188,355 +237,255 @@ async function handleSaveOffline() {
       <p>加载中...</p>
     </div>
 
-    <div v-else class="space-y-6">
-      <!-- Account Settings -->
-      <div v-if="currentAccountId" class="card rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-        <h2 class="mb-4 flex items-center gap-2 text-xl font-bold">
-          <div i-carbon-settings-adjust />
-          账号策略设置 ({{ currentAccountName }})
-        </h2>
-
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <!-- Strategy -->
-          <div class="space-y-4">
-            <h3 class="border-b pb-2 text-gray-700 font-semibold dark:text-gray-300">
-              种植策略
-            </h3>
-
-            <div>
-              <label class="mb-1 block text-sm font-medium">策略模式</label>
-              <select
-                v-model="localSettings.plantingStrategy"
-                class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-              >
-                <option value="preferred">
-                  优先种植种子 (下方选择)
-                </option>
-                <option value="level">
-                  最高等级作物
-                </option>
-                <option value="max_exp">
-                  最大经验/时
-                </option>
-                <option value="max_fert_exp">
-                  最大普通肥经验/时
-                </option>
-                <option value="max_profit">
-                  最大净利润/时
-                </option>
-                <option value="max_fert_profit">
-                  最大普通肥净利润/时
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="mb-1 block text-sm font-medium">优先种子</label>
-              <select
-                v-model="localSettings.preferredSeedId"
-                class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                :disabled="localSettings.plantingStrategy !== 'preferred'"
-              >
-                <option :value="0">
-                  自动选择
-                </option>
-                <option
-                  v-for="seed in seeds"
-                  :key="seed.seedId"
-                  :value="seed.seedId"
-                  :disabled="seed.locked || seed.soldOut"
-                >
-                  {{ seed.requiredLevel }}级 {{ seed.name }} ({{ seed.price }}金)
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Intervals -->
-          <div class="space-y-4">
-            <h3 class="border-b pb-2 text-gray-700 font-semibold dark:text-gray-300">
-              时间间隔 (秒)
-            </h3>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="mb-1 block text-sm font-medium">农场巡查最小</label>
-                <input
-                  v-model.number="localSettings.intervals.farmMin"
-                  type="number"
-                  min="1"
-                  class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                >
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium">农场巡查最大</label>
-                <input
-                  v-model.number="localSettings.intervals.farmMax"
-                  type="number"
-                  min="1"
-                  class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                >
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium">好友巡查最小</label>
-                <input
-                  v-model.number="localSettings.intervals.friendMin"
-                  type="number"
-                  min="1"
-                  class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                >
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium">好友巡查最大</label>
-                <input
-                  v-model.number="localSettings.intervals.friendMax"
-                  type="number"
-                  min="1"
-                  class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                >
-              </div>
-            </div>
-          </div>
+    <div v-else class="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2 text-sm">
+      <!-- Card 1: Strategy & Automation -->
+      <div v-if="currentAccountId" class="card flex flex-col h-full rounded-lg bg-white shadow dark:bg-gray-800">
+        <!-- Strategy Header -->
+        <div class="border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+            <div class="i-fas-cogs" />
+            策略设置
+          </h3>
         </div>
 
-        <div class="mt-6 space-y-4">
-          <h3 class="border-b pb-2 text-gray-700 font-semibold dark:text-gray-300">
-            好友静默时段
-          </h3>
-          <div class="flex flex-wrap items-center gap-4">
-            <label class="flex cursor-pointer items-center gap-2">
-              <input
-                v-model="localSettings.friendQuietHours.enabled"
-                type="checkbox"
-                class="h-4 w-4 rounded text-blue-600"
-              >
-              <span>启用</span>
-            </label>
+        <!-- Strategy Content -->
+        <div class="p-4 space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BaseSelect
+              v-model="localSettings.plantingStrategy"
+              label="种植策略"
+              :options="plantingStrategyOptions"
+            />
+            <BaseSelect
+              v-model="localSettings.preferredSeedId"
+              label="优先种植种子"
+              :disabled="localSettings.plantingStrategy !== 'preferred'"
+              :options="preferredSeedOptions"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <BaseInput
+              v-model.number="localSettings.intervals.farmMin"
+              label="农场巡查最小 (秒)"
+              type="number"
+              min="1"
+            />
+            <BaseInput
+              v-model.number="localSettings.intervals.farmMax"
+              label="农场巡查最大 (秒)"
+              type="number"
+              min="1"
+            />
+            <BaseInput
+              v-model.number="localSettings.intervals.friendMin"
+              label="好友巡查最小 (秒)"
+              type="number"
+              min="1"
+            />
+            <BaseInput
+              v-model.number="localSettings.intervals.friendMax"
+              label="好友巡查最大 (秒)"
+              type="number"
+              min="1"
+            />
+          </div>
+
+          <div class="flex flex-wrap items-center gap-4 pt-1 border-t dark:border-gray-700">
+            <BaseSwitch
+              v-model="localSettings.friendQuietHours.enabled"
+              label="启用静默时段"
+            />
             <div class="flex items-center gap-2">
-              <span>开始:</span>
-              <input
+              <BaseInput
                 v-model="localSettings.friendQuietHours.start"
                 type="time"
-                class="border rounded px-2 py-1 dark:border-gray-600 dark:bg-gray-700"
+                class="w-24"
                 :disabled="!localSettings.friendQuietHours.enabled"
-              >
-            </div>
-            <div class="flex items-center gap-2">
-              <span>结束:</span>
-              <input
+              />
+              <span class="text-gray-500">-</span>
+              <BaseInput
                 v-model="localSettings.friendQuietHours.end"
                 type="time"
-                class="border rounded px-2 py-1 dark:border-gray-600 dark:bg-gray-700"
+                class="w-24"
                 :disabled="!localSettings.friendQuietHours.enabled"
-              >
+              />
             </div>
           </div>
         </div>
 
-        <div class="mt-6 space-y-4">
-          <h3 class="border-b pb-2 text-gray-700 font-semibold dark:text-gray-300">
-            自动化开关
+        <!-- Auto Control Header -->
+        <div class="border-t border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+            <div class="i-fas-toggle-on" />
+            自动控制
           </h3>
+        </div>
 
-          <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 md:grid-cols-3">
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.farm" type="checkbox" class="h-4 w-4">
-              <span>自动种植/收获</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.task" type="checkbox" class="h-4 w-4">
-              <span>自动做任务</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.sell" type="checkbox" class="h-4 w-4">
-              <span>自动卖果实</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.friend" type="checkbox" class="h-4 w-4">
-              <span>自动好友互动</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.farm_push" type="checkbox" class="h-4 w-4">
-              <span>推送触发巡田</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.land_upgrade" type="checkbox" class="h-4 w-4">
-              <span>自动升级土地</span>
-            </label>
+        <!-- Auto Control Content -->
+        <div class="p-4 space-y-4 flex-1">
+          <!-- Switches Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <BaseSwitch v-model="localSettings.automation.farm" label="自动种植收获" />
+            <BaseSwitch v-model="localSettings.automation.task" label="自动做任务" />
+            <BaseSwitch v-model="localSettings.automation.sell" label="自动卖果实" />
+            <BaseSwitch v-model="localSettings.automation.friend" label="自动好友互动" />
+            <BaseSwitch v-model="localSettings.automation.farm_push" label="推送触发巡田" />
+            <BaseSwitch v-model="localSettings.automation.land_upgrade" label="自动升级土地" />
           </div>
 
-          <div v-if="localSettings.automation.friend" class="grid grid-cols-2 mt-2 gap-4 border-l-2 border-blue-200 pl-4 md:grid-cols-4 dark:border-blue-900">
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.friend_steal" type="checkbox" class="h-4 w-4">
-              <span>自动偷菜</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.friend_help" type="checkbox" class="h-4 w-4">
-              <span>自动帮忙</span>
-            </label>
-            <label class="flex cursor-pointer select-none items-center gap-2">
-              <input v-model="localSettings.automation.friend_bad" type="checkbox" class="h-4 w-4">
-              <span>自动捣乱</span>
-            </label>
+          <!-- Sub-controls -->
+          <div v-if="localSettings.automation.friend" class="flex flex-wrap gap-4 rounded bg-blue-50 p-2 dark:bg-blue-900/20 text-sm">
+            <BaseSwitch v-model="localSettings.automation.friend_steal" label="自动偷菜" />
+            <BaseSwitch v-model="localSettings.automation.friend_help" label="自动帮忙" />
+            <BaseSwitch v-model="localSettings.automation.friend_bad" label="自动捣乱" />
           </div>
 
-          <div class="mt-4">
-            <label class="mb-1 block text-sm font-medium">施肥策略</label>
-            <select
+          <!-- Fertilizer -->
+          <div>
+            <BaseSelect
               v-model="localSettings.automation.fertilizer"
-              class="w-full border rounded px-3 py-2 md:w-1/2 dark:border-gray-600 dark:bg-gray-700"
-            >
-              <option value="both">
-                普通 + 有机
-              </option>
-              <option value="normal">
-                仅普通化肥
-              </option>
-              <option value="organic">
-                仅有机化肥
-              </option>
-              <option value="none">
-                不施肥
-              </option>
-            </select>
+              label="施肥策略"
+              class="w-full md:w-1/2"
+              :options="fertilizerOptions"
+            />
           </div>
         </div>
 
-        <div class="mt-8 flex justify-end">
-          <button
-            class="flex items-center gap-2 rounded bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
-            :disabled="saving"
+        <!-- Save Button -->
+        <div class="border-t px-4 py-3 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end mt-auto">
+          <BaseButton
+            variant="primary"
+            size="sm"
+            :loading="saving"
             @click="saveAccountSettings"
           >
-            <div v-if="saving" class="i-svg-spinners-ring-resize" />
-            <span>保存账号设置</span>
-          </button>
+            保存策略与自动控制
+          </BaseButton>
         </div>
       </div>
 
       <div v-else class="card rounded bg-yellow-50 p-4 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
-        请先在顶部选择一个账号以配置策略和自动化选项。
+        请先在登录一个账号以配置策略和自动化选项。
       </div>
 
-      <!-- System Settings -->
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Password -->
-        <div class="card rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-          <h2 class="mb-4 flex items-center gap-2 text-xl font-bold">
-            <div i-carbon-password />
+      <!-- Card 2: System Settings (Password & Offline) -->
+      <div class="card flex flex-col h-full rounded-lg bg-white shadow dark:bg-gray-800">
+        <!-- Password Header -->
+        <div class="border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+            <div class="i-carbon-password" />
             管理密码
-          </h2>
-          <div class="space-y-4">
-            <div>
-              <label class="mb-1 block text-sm font-medium">当前密码</label>
-              <input v-model="passwordForm.old" type="password" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">新密码 (至少4位)</label>
-              <input v-model="passwordForm.new" type="password" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-            </div>
-            <div>
-              <label class="mb-1 block text-sm font-medium">确认新密码</label>
-              <input v-model="passwordForm.confirm" type="password" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-            </div>
-            <div class="pt-2">
-              <button
-                class="w-full rounded bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
-                :disabled="passwordSaving"
-                @click="handleChangePassword"
-              >
-                <span v-if="passwordSaving">修改中...</span>
-                <span v-else>修改密码</span>
-              </button>
-            </div>
+          </h3>
+        </div>
+
+        <!-- Password Content -->
+        <div class="p-4 space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <BaseInput
+              v-model="passwordForm.old"
+              label="当前密码"
+              type="password"
+              placeholder="当前管理密码"
+            />
+            <BaseInput
+              v-model="passwordForm.new"
+              label="新密码"
+              type="password"
+              placeholder="至少 4 位"
+            />
+            <BaseInput
+              v-model="passwordForm.confirm"
+              label="确认新密码"
+              type="password"
+              placeholder="再次输入新密码"
+            />
+          </div>
+          
+          <div class="flex items-center justify-between pt-1">
+            <p class="text-xs text-gray-500">建议修改默认密码 (admin)</p>
+            <BaseButton
+              variant="primary"
+              size="sm"
+              :loading="passwordSaving"
+              @click="handleChangePassword"
+            >
+              修改管理密码
+            </BaseButton>
           </div>
         </div>
 
-        <!-- Offline Reminder -->
-        <div class="card rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-          <h2 class="mb-4 flex items-center gap-2 text-xl font-bold">
-            <div i-carbon-notification />
+        <!-- Offline Header -->
+        <div class="border-t border-b px-4 py-3 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+          <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+            <div class="i-carbon-notification" />
             下线提醒
-          </h2>
-          <div class="space-y-4">
-            <div>
-              <label class="mb-1 block text-sm font-medium">推送渠道</label>
-              <select v-model="localOffline.channel" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-                <option value="webhook">
-                  webhook (自定义接口)
-                </option>
-                <option value="qmsg">
-                  qmsg
-                </option>
-                <option value="serverchan">
-                  serverchan
-                </option>
-                <option value="pushplus">
-                  pushplus
-                </option>
-                <option value="dingtalk">
-                  dingtalk
-                </option>
-                <option value="wecom">
-                  wecom
-                </option>
-                <option value="bark">
-                  bark
-                </option>
-                <option value="telegram">
-                  telegram
-                </option>
-                <!-- Add more as needed -->
-              </select>
-            </div>
+          </h3>
+        </div>
 
-            <div v-if="localOffline.channel === 'webhook'">
-              <label class="mb-1 block text-sm font-medium">接口地址</label>
-              <input v-model="localOffline.endpoint" type="text" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-            </div>
-
-            <div>
-              <label class="mb-1 block text-sm font-medium">Token</label>
-              <input v-model="localOffline.token" type="text" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700" placeholder="接收端 token">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="mb-1 block text-sm font-medium">标题</label>
-                <input v-model="localOffline.title" type="text" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium">重登录链接</label>
-                <select v-model="localOffline.reloginUrlMode" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-                  <option value="none">
-                    不需要
-                  </option>
-                  <option value="qq_link">
-                    QQ直链
-                  </option>
-                  <option value="qr_link">
-                    二维码链接
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="mb-1 block text-sm font-medium">离线删除账号 (秒)</label>
-              <input v-model.number="localOffline.offlineDeleteSec" type="number" min="1" class="w-full border rounded px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-            </div>
-
-            <div class="pt-2">
-              <button
-                class="w-full rounded bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
-                :disabled="offlineSaving"
-                @click="handleSaveOffline"
-              >
-                <span v-if="offlineSaving">保存中...</span>
-                <span v-else>保存提醒设置</span>
-              </button>
-            </div>
+        <!-- Offline Content -->
+        <div class="p-4 space-y-3 flex-1">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BaseSelect
+              v-model="localOffline.channel"
+              label="推送渠道"
+              :options="channelOptions"
+            />
+            <BaseSelect
+              v-model="localOffline.reloginUrlMode"
+              label="重登录链接"
+              :options="reloginUrlModeOptions"
+            />
           </div>
+
+          <BaseInput
+            v-if="localOffline.channel === 'webhook'"
+            v-model="localOffline.endpoint"
+            label="接口地址"
+            type="text"
+          />
+
+          <BaseInput
+            v-model="localOffline.token"
+            label="Token"
+            type="text"
+            placeholder="接收端 token"
+          />
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BaseInput
+              v-model="localOffline.title"
+              label="标题"
+              type="text"
+              placeholder="提醒标题"
+            />
+            <BaseInput
+              v-model.number="localOffline.offlineDeleteSec"
+              label="离线删除账号 (秒)"
+              type="number"
+              min="1"
+              placeholder="默认 120"
+            />
+          </div>
+          
+          <BaseInput
+            v-model="localOffline.msg"
+            label="内容"
+            type="text"
+            placeholder="提醒内容"
+          />
+        </div>
+
+        <!-- Save Offline Button -->
+        <div class="border-t px-4 py-3 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end mt-auto">
+          <BaseButton
+            variant="primary"
+            size="sm"
+            :loading="offlineSaving"
+            @click="handleSaveOffline"
+          >
+            保存下线提醒设置
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -555,8 +504,5 @@ async function handleSaveOffline() {
 </template>
 
 <style scoped lang="postcss">
-/* Custom switch style if needed, or use daisyUI/headlessUI/custom CSS */
-input[type='checkbox'] {
-  @apply rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
-}
+/* Custom styles if needed */
 </style>

@@ -18,6 +18,8 @@ const showAccountDropdown = ref(false)
 const showAccountModal = ref(false)
 const showRemarkModal = ref(false)
 const accountToEdit = ref<any>(null)
+const wsErrorNotifiedAt = ref<Record<string, number>>({})
+
 const systemConnected = ref(true)
 const serverUptimeBase = ref(0)
 const lastPingTime = ref(Date.now())
@@ -44,6 +46,22 @@ async function checkConnection() {
 async function refreshStatus() {
   if (currentAccount.value?.uin) {
     await statusStore.fetchStatus(String(currentAccount.value.uin))
+    
+    // Check for WS Error (400 = Code Expired)
+    const wsError = status.value?.wsError
+    if (wsError && Number(wsError.code) === 400 && currentAccount.value) {
+      const errAt = Number(wsError.at) || 0
+      const accId = String(currentAccount.value.uin)
+      const lastNotified = wsErrorNotifiedAt.value[accId] || 0
+      
+      if (errAt > lastNotified) {
+        wsErrorNotifiedAt.value[accId] = errAt
+        // Trigger re-login (AccountModal in edit mode)
+        accountToEdit.value = currentAccount.value
+        showAccountModal.value = true
+        // Switch to QR tab by default for re-login? AccountModal defaults to QR.
+      }
+    }
   }
 }
 
@@ -161,7 +179,7 @@ const version = __APP_VERSION__
     <div class="h-16 flex items-center gap-3 border-b border-gray-100 px-6 dark:border-gray-700/50">
       <div class="i-carbon-sprout text-2xl text-green-500" />
       <span class="from-green-600 to-emerald-500 bg-gradient-to-r bg-clip-text text-lg text-transparent font-bold">
-        QQ农场助手
+        QQ农场智能助手
       </span>
     </div>
 
@@ -304,7 +322,8 @@ const version = __APP_VERSION__
 
   <AccountModal
     :show="showAccountModal"
-    @close="showAccountModal = false"
+    :edit-data="accountToEdit"
+    @close="showAccountModal = false; accountToEdit = null"
     @saved="handleAccountSaved"
   />
 

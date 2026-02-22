@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { onMounted, ref, watch } from 'vue'
 import api from '@/api'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
 import { useAccountStore } from '@/stores/account'
 
 const accountStore = useAccountStore()
@@ -109,14 +110,11 @@ function formatGrowTime(seconds: any) {
 
       <div class="flex items-center gap-2">
         <label class="whitespace-nowrap text-sm font-medium">排序方式:</label>
-        <select
+        <BaseSelect
           v-model="sortKey"
-          class="border rounded bg-white px-3 py-1 text-sm outline-none dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-blue-500"
-        >
-          <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
+          :options="sortOptions"
+          class="w-40"
+        />
       </div>
     </div>
 

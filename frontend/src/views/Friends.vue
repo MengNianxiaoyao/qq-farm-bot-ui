@@ -5,11 +5,14 @@ import { onMounted, ref, watch } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useAccountStore } from '@/stores/account'
 import { useFriendStore } from '@/stores/friend'
+import { useStatusStore } from '@/stores/status'
 
 const accountStore = useAccountStore()
 const friendStore = useFriendStore()
+const statusStore = useStatusStore()
 const { currentAccountId } = storeToRefs(accountStore)
 const { friends, loading, friendLands, friendLandsLoading } = storeToRefs(friendStore)
+const { status, loading: statusLoading } = storeToRefs(statusStore)
 
 // Confirm Modal state
 const showConfirm = ref(false)
@@ -44,8 +47,10 @@ async function onConfirm() {
 const expandedFriends = ref<Set<string>>(new Set())
 
 function loadFriends() {
-  if (currentAccountId.value)
+  if (currentAccountId.value) {
     friendStore.fetchFriends(currentAccountId.value)
+    statusStore.fetchStatus(currentAccountId.value)
+  }
 }
 
 function formatTime(sec: number) {
@@ -158,12 +163,24 @@ function getFriendStatusText(friend: any) {
       </div>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-12">
+    <div v-if="loading || statusLoading" class="flex justify-center py-12">
       <div class="i-svg-spinners-90-ring-with-bg text-4xl text-blue-500" />
     </div>
 
     <div v-else-if="!currentAccountId" class="rounded-lg bg-white p-8 text-center text-gray-500 shadow dark:bg-gray-800">
       请选择账号后查看好友
+    </div>
+
+    <div v-else-if="!status?.connection?.connected" class="flex flex-col items-center justify-center gap-4 rounded-lg bg-white p-12 text-center text-gray-500 shadow dark:bg-gray-800">
+      <div class="i-carbon-connection-signal-off text-4xl text-gray-400" />
+      <div>
+        <div class="text-lg text-gray-700 font-medium dark:text-gray-300">
+          账号未登录
+        </div>
+        <div class="mt-1 text-sm text-gray-400">
+          请先运行账号或检查网络连接
+        </div>
+      </div>
     </div>
 
     <div v-else-if="friends.length === 0" class="rounded-lg bg-white p-8 text-center text-gray-500 shadow dark:bg-gray-800">
@@ -292,14 +309,14 @@ function getFriendStatusText(friend: any) {
         </div>
       </div>
     </div>
-  </div>
 
-  <ConfirmModal
-    :show="showConfirm"
-    :loading="confirmLoading"
-    title="确认操作"
-    :message="confirmMessage"
-    @confirm="onConfirm"
-    @cancel="!confirmLoading && (showConfirm = false)"
-  />
+    <ConfirmModal
+      :show="showConfirm"
+      :loading="confirmLoading"
+      title="确认操作"
+      :message="confirmMessage"
+      @confirm="onConfirm"
+      @cancel="!confirmLoading && (showConfirm = false)"
+    />
+  </div>
 </template>

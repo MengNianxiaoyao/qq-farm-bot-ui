@@ -4,11 +4,14 @@ import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useAccountStore } from '@/stores/account'
 import { useFarmStore } from '@/stores/farm'
+import { useStatusStore } from '@/stores/status'
 
 const farmStore = useFarmStore()
 const accountStore = useAccountStore()
+const statusStore = useStatusStore()
 const { lands, summary, loading } = storeToRefs(farmStore)
 const { currentAccountId } = storeToRefs(accountStore)
+const { status, loading: statusLoading } = storeToRefs(statusStore)
 
 const operating = ref(false)
 
@@ -60,6 +63,7 @@ async function handleOperate(opType: string) {
 function refresh() {
   if (currentAccountId.value) {
     farmStore.fetchLands(currentAccountId.value)
+    statusStore.fetchStatus(currentAccountId.value)
   }
 }
 
@@ -156,11 +160,27 @@ onUnmounted(() => {
 
       <!-- Grid -->
       <div class="p-4">
-        <div v-if="loading && !lands.length" class="flex justify-center py-12">
+        <div v-if="loading || statusLoading" class="flex justify-center py-12">
           <div class="i-svg-spinners-90-ring-with-bg text-4xl text-blue-500" />
         </div>
 
-        <div v-else class="grid grid-cols-3 gap-2 lg:grid-cols-8 md:grid-cols-5 sm:grid-cols-4">
+        <div v-else-if="!status?.connection?.connected" class="flex flex-col items-center justify-center gap-4 rounded-lg bg-white p-12 text-center text-gray-500 shadow dark:bg-gray-800">
+          <div class="i-carbon-connection-signal-off text-4xl text-gray-400" />
+          <div>
+            <div class="text-lg text-gray-700 font-medium dark:text-gray-300">
+              账号未登录
+            </div>
+            <div class="mt-1 text-sm text-gray-400">
+              请先运行账号或检查网络连接
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="!lands || lands.length === 0" class="flex justify-center py-12 text-gray-500">
+          暂无土地数据
+        </div>
+
+        <div v-else class="grid grid-cols-2 gap-4 lg:grid-cols-6 md:grid-cols-4 sm:grid-cols-3">
           <div
             v-for="land in lands"
             :key="land.id"

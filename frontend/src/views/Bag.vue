@@ -65,7 +65,7 @@ watch(currentAccountId, () => {
       <div class="i-carbon-connection-signal-off text-4xl text-gray-400" />
       <div>
         <div class="text-lg text-gray-700 font-medium dark:text-gray-300">
-          账号未连接
+          账号未登录
         </div>
         <div class="mt-1 text-sm text-gray-400">
           请先运行账号或检查网络连接

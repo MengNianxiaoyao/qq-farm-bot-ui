@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseCheckbox from '@/components/ui/BaseCheckbox.vue'
 import { useAccountStore } from '@/stores/account'
 import { useBagStore } from '@/stores/bag'
 import { useStatusStore } from '@/stores/status'
@@ -117,11 +121,17 @@ function formatBucketTime(item: any) {
 // Next Check Countdown
 const nextFarmCheck = ref('--')
 const nextFriendCheck = ref('--')
+const localUptime = ref(0)
 let localNextFarmRemainSec = 0
 let localNextFriendRemainSec = 0
 let countdownTimer: any = null
 
 function updateCountdowns() {
+  // Update uptime
+  if (status.value?.connection?.connected) {
+    localUptime.value++
+  }
+
   if (localNextFarmRemainSec > 0) {
     localNextFarmRemainSec--
     nextFarmCheck.value = formatDuration(localNextFarmRemainSec)
@@ -147,6 +157,9 @@ watch(status, (newVal) => {
     localNextFarmRemainSec = newVal.nextChecks.farmRemainSec || 0
     localNextFriendRemainSec = newVal.nextChecks.friendRemainSec || 0
     updateCountdowns() // Update immediately
+  }
+  if (newVal?.uptime !== undefined) {
+    localUptime.value = newVal.uptime
   }
 }, { deep: true })
 
@@ -267,7 +280,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="pt-6 space-y-6">
     <!-- Error Alert -->
     <div v-if="error" class="mb-4 flex items-center gap-2 border border-red-200 rounded-lg bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
       <div class="i-carbon-warning-filled text-xl" />
@@ -342,7 +355,7 @@ onUnmounted(() => {
               <span class="text-xs font-bold">{{ status?.connection?.connected ? '在线' : '离线' }}</span>
             </div>
             <div class="text-xs text-gray-400">
-              运行: {{ formatDuration(status?.uptime) }}
+              {{ formatDuration(localUptime) }}
             </div>
           </div>
         </div>
@@ -407,35 +420,47 @@ onUnmounted(() => {
           </h3>
 
           <div class="flex flex-wrap items-center gap-2 text-sm">
-            <select v-model="filter.module" class="border border-gray-200 rounded bg-gray-50 px-2 py-1 outline-none dark:border-gray-600 focus:border-blue-500 dark:bg-gray-700 focus:ring-1 focus:ring-blue-500" @change="refresh">
-              <option v-for="opt in modules" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
+            <BaseSelect
+              v-model="filter.module"
+              :options="modules"
+              class="w-32"
+              @change="refresh"
+            />
 
-            <select v-model="filter.event" class="border border-gray-200 rounded bg-gray-50 px-2 py-1 outline-none dark:border-gray-600 focus:border-blue-500 dark:bg-gray-700 focus:ring-1 focus:ring-blue-500" @change="refresh">
-              <option v-for="opt in events" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
+            <BaseSelect
+              v-model="filter.event"
+              :options="events"
+              class="w-32"
+              @change="refresh"
+            />
 
-            <div class="flex items-center border border-gray-200 rounded bg-gray-50 px-2 py-1 dark:border-gray-600 dark:bg-gray-700">
-              <input v-model="filter.keyword" placeholder="关键词..." class="w-24 bg-transparent text-sm outline-none sm:w-32" @keyup.enter="refresh">
-              <div v-if="filter.keyword" class="i-carbon-close cursor-pointer text-gray-400 hover:text-gray-600" @click="filter.keyword = ''; refresh()" />
+            <div class="flex items-center">
+              <BaseInput
+                v-model="filter.keyword"
+                placeholder="关键词..."
+                class="w-32"
+                @keyup.enter="refresh"
+              />
+              <div v-if="filter.keyword" class="ml-2 i-carbon-close cursor-pointer text-gray-400 hover:text-gray-600" @click="filter.keyword = ''; refresh()" />
             </div>
 
-            <label class="flex cursor-pointer select-none items-center gap-1 border border-gray-200 rounded bg-gray-50 px-2 py-1 dark:border-gray-600 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
-              <input v-model="filter.isWarn" type="checkbox" class="accent-blue-500" @change="refresh">
-              <span>只看异常</span>
-            </label>
+            <BaseCheckbox
+              v-model="filter.isWarn"
+              label="只看异常"
+              @change="refresh"
+            />
 
-            <button class="flex items-center gap-1 rounded bg-blue-500 px-3 py-1 text-white transition-colors hover:bg-blue-600" @click="refresh">
+            <BaseButton
+              variant="primary"
+              size="sm"
+              @click="refresh"
+            >
               <div class="i-carbon-search" />
-            </button>
+            </BaseButton>
           </div>
         </div>
 
-        <div ref="logContainer" class="min-h-[300px] flex-1 overflow-y-auto rounded bg-gray-50 p-4 text-sm leading-relaxed font-mono dark:bg-gray-900" @scroll="onLogScroll">
+        <div ref="logContainer" class="h-[500px] overflow-y-auto rounded bg-gray-50 p-4 text-sm leading-relaxed font-mono dark:bg-gray-900" @scroll="onLogScroll">
           <div v-if="!logs.length" class="py-8 text-center text-gray-400">
             暂无日志
           </div>

@@ -10,7 +10,7 @@ import Sidebar from '@/components/Sidebar.vue'
       <!-- Top Bar (Mobile/Tablet only or for additional actions) -->
       <header class="h-16 flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 lg:hidden dark:border-gray-700/50 dark:bg-gray-800">
         <div class="text-lg font-bold">
-          QQ农场助手
+          QQ农场智能助手
         </div>
         <!-- Mobile menu toggle would go here -->
       </header>

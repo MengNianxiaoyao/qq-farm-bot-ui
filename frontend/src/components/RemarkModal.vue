@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
 import api from '@/api'
 
 const props = defineProps<{
@@ -59,41 +61,36 @@ async function save() {
         <h3 class="text-lg font-semibold">
           修改备注
         </h3>
-        <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" @click="$emit('close')">
+        <BaseButton variant="ghost" class="!p-1" @click="$emit('close')">
           <div class="i-carbon-close text-xl" />
-        </button>
+        </BaseButton>
       </div>
 
       <div class="p-4 space-y-4">
         <div v-if="errorMessage" class="rounded bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
           {{ errorMessage }}
         </div>
-        <div>
-          <label class="mb-1 block text-sm text-gray-700 font-medium dark:text-gray-300">备注名称</label>
-          <input
-            v-model="name"
-            type="text"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-            placeholder="请输入备注名称"
-            @keyup.enter="save"
-          >
-        </div>
+        <BaseInput
+          v-model="name"
+          label="备注名称"
+          placeholder="请输入备注名称"
+          @keyup.enter="save"
+        />
 
         <div class="flex justify-end gap-2">
-          <button
-            class="border border-gray-300 rounded px-4 py-2 text-gray-700 dark:border-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+          <BaseButton
+            variant="outline"
             @click="$emit('close')"
           >
             取消
-          </button>
-          <button
-            class="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-            :disabled="loading"
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            :loading="loading"
             @click="save"
           >
-            <div v-if="loading" class="i-svg-spinners-90-ring-with-bg" />
-            <span>保存</span>
-          </button>
+            保存
+          </BaseButton>
         </div>
       </div>
     </div>

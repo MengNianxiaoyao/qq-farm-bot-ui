@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { onUnmounted, reactive, ref, watch } from 'vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseTextarea from '@/components/ui/BaseTextarea.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
 import api from '@/api'
 
 const props = defineProps<{
@@ -204,9 +208,9 @@ watch(() => props.show, (newVal) => {
         <h3 class="text-lg font-semibold">
           {{ editData ? '编辑账号' : '添加账号' }}
         </h3>
-        <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" @click="close">
+        <BaseButton variant="ghost" class="!p-1" @click="close">
           <div i-carbon-close class="text-xl" />
-        </button>
+        </BaseButton>
       </div>
 
       <div class="p-4">
@@ -250,59 +254,54 @@ watch(() => props.show, (newVal) => {
             {{ qrStatus }}
           </p>
           <div class="flex gap-2">
-            <button class="text-sm text-blue-600 hover:underline" @click="loadQRCode">
+            <BaseButton variant="text" size="sm" @click="loadQRCode">
               刷新二维码
-            </button>
+            </BaseButton>
             <a v-if="qrData?.url" :href="qrData.url" target="_blank" class="text-sm text-blue-600 md:hidden hover:underline">跳转QQ登录</a>
           </div>
         </div>
 
         <!-- Manual Tab -->
         <div v-if="activeTab === 'manual'" class="space-y-4">
-          <div>
-            <label class="mb-1 block text-sm text-gray-700 font-medium dark:text-gray-300">备注名称</label>
-            <input
-              v-model="form.name"
-              type="text"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="留空默认账号X"
-            >
-          </div>
-          <div>
-            <label class="mb-1 block text-sm text-gray-700 font-medium dark:text-gray-300">Code</label>
-            <textarea
-              v-model="form.code"
-              rows="3"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="请输入登录 Code"
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-sm text-gray-700 font-medium dark:text-gray-300">平台</label>
-            <select v-model="form.platform" class="w-full border border-gray-300 rounded-md px-3 py-2 shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-              <option value="qq">
-                QQ小程序
-              </option>
-              <option value="wx">
-                微信小程序
-              </option>
-            </select>
-          </div>
+          <BaseInput
+            v-model="form.name"
+            label="备注名称"
+            placeholder="留空默认账号X"
+          />
+
+          <BaseTextarea
+            v-model="form.code"
+            label="Code"
+            placeholder="请输入登录 Code"
+            :rows="3"
+          />
+
+          <BaseSelect
+            v-model="form.platform"
+            label="平台"
+          >
+            <option value="qq">
+              QQ小程序
+            </option>
+            <option value="wx">
+              微信小程序
+            </option>
+          </BaseSelect>
 
           <div class="flex justify-end gap-2 pt-4">
-            <button
-              class="border border-gray-300 rounded px-4 py-2 text-gray-700 dark:border-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            <BaseButton
+              variant="outline"
               @click="close"
             >
               取消
-            </button>
-            <button
-              class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-              :disabled="loading"
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              :loading="loading"
               @click="submitManual"
             >
               {{ editData ? '保存' : '添加' }}
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>

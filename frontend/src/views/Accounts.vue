@@ -4,6 +4,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AccountModal from '@/components/AccountModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useAccountStore } from '@/stores/account'
 
 const router = useRouter()
@@ -83,13 +84,13 @@ function handleSaved() {
       <h1 class="text-2xl font-bold">
         账号管理
       </h1>
-      <button
-        class="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+      <BaseButton
+        variant="primary"
         @click="openAddModal"
       >
-        <div i-carbon-add />
+        <div i-carbon-add class="mr-2" />
         添加账号
-      </button>
+      </BaseButton>
     </div>
 
     <div v-if="loading && accounts.length === 0" class="py-8 text-center text-gray-500">
@@ -102,12 +103,12 @@ function handleSaved() {
       <p class="mb-4 text-gray-500">
         暂无账号
       </p>
-      <button
-        class="text-blue-600 hover:underline"
+      <BaseButton
+        variant="text"
         @click="openAddModal"
       >
         立即添加
-      </button>
+      </BaseButton>
     </div>
 
     <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-3 md:grid-cols-2">
@@ -142,36 +143,40 @@ function handleSaved() {
         </div>
 
         <div class="mt-2 flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-700">
-          <button
-            class="rounded bg-gray-100 px-3 py-1.5 text-sm transition dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-            :class="acc.running ? 'text-red-600' : 'text-green-600'"
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            :class="acc.running ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'"
             @click="toggleAccount(acc)"
           >
             {{ acc.running ? '停止' : '启动' }}
-          </button>
+          </BaseButton>
 
           <div class="flex gap-2">
-            <button
-              class="rounded p-2 text-gray-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20"
+            <BaseButton
+              variant="ghost"
+              class="!p-2"
               title="设置"
               @click="openSettings(acc)"
             >
               <div i-carbon-settings />
-            </button>
-            <button
-              class="rounded p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20"
+            </BaseButton>
+            <BaseButton
+              variant="ghost"
+              class="!p-2"
               title="编辑"
               @click="openEditModal(acc)"
             >
               <div i-carbon-edit />
-            </button>
-            <button
-              class="rounded p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+            </BaseButton>
+            <BaseButton
+              variant="ghost"
+              class="!p-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
               title="删除"
               @click="handleDelete(acc)"
             >
               <div i-carbon-trash-can />
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>

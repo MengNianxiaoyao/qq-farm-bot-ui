@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - refactor
 
 jobs:
   build:
@@ -13,25 +14,47 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install
-        run: npm install
-      - name: build
-        run: npm run build:release
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: |
+          pnpm install
+          pnpm frontend:install
+
+      - name: Build
+        run: pnpm build:release
+
+      - name: List Artifacts
+        run: ls -R dist
+
       - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
           name: farm-win-x64
           path: ./dist/farm-win-x64.exe
+
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
           name: farm-linux-x64
           path: ./dist/farm-linux-x64
+
       - name: Upload MacOS Intel
         uses: actions/upload-artifact@v4
         with:
           name: farm-mac-x64
           path: ./dist/farm-macos-x64
+
       - name: Upload MacOS Apple Silicon
         uses: actions/upload-artifact@v4
         with:

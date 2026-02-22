@@ -60,7 +60,7 @@ function broadcastConfigToWorkers(targetAccountId = '') {
     }
 }
 
-function log(tag, msg) {
+function log(tag, msg, extra = {}) {
     const time = new Date().toLocaleString();
     console.log(`[${tag}] ${msg}`);
     const moduleName = (tag === '系统' || tag === '错误') ? 'system' : '';
@@ -70,6 +70,7 @@ function log(tag, msg) {
         msg,
         meta: moduleName ? { module: moduleName } : {},
         ts: Date.now(),
+        ...extra,
     };
     entry._searchText = `${entry.msg || ''} ${entry.tag || ''} ${JSON.stringify(entry.meta || {})}`.toLowerCase();
     GLOBAL_LOGS.push(entry);
@@ -156,7 +157,7 @@ function startReloginWatcher({ loginCode, accountId = '', accountName = '' }) {
     const key = `${accountId || 'unknown'}:${code}`;
     if (reloginWatchers.has(key)) return;
     reloginWatchers.set(key, { startedAt: Date.now() });
-    log('系统', `已启动重登录监听: ${accountName || accountId || '未知账号'}`);
+    log('系统', `已启动重登录监听: ${accountName || accountId || '未知账号'}`, { accountId: String(accountId || ''), accountName: accountName || '' });
 
     let stopped = false;
     const stop = () => {
@@ -175,7 +176,7 @@ function startReloginWatcher({ loginCode, accountId = '', accountName = '' }) {
                     continue;
                 }
                 if (status.status === 'Used') {
-                    log('系统', `重登录二维码已失效: ${accountName || accountId || '未知账号'}`);
+                    log('系统', `重登录二维码已失效: ${accountName || accountId || '未知账号'}`, { accountId: String(accountId || ''), accountName: accountName || '' });
                     stop();
                     return;
                 }
@@ -202,7 +203,7 @@ function startReloginWatcher({ loginCode, accountId = '', accountName = '' }) {
                 await sleep(1000);
             }
         }
-        log('系统', `重登录监听超时: ${accountName || accountId || '未知账号'}`);
+        log('系统', `重登录监听超时: ${accountName || accountId || '未知账号'}`, { accountId: String(accountId || ''), accountName: accountName || '' });
         stop();
     })();
 }
@@ -253,7 +254,7 @@ function applyReloginCode({ accountId = '', accountName = '', authCode = '', uin
     if (newAcc) {
         startWorker(newAcc);
         addAccountLog('add', `重登录成功，已新增账号: ${newAcc.name}`, newAcc.id, newAcc.name, { reason: 'relogin' });
-        log('系统', `重登录成功，已新增账号并启动: ${newAcc.name}`);
+        log('系统', `重登录成功，已新增账号并启动: ${newAcc.name}`, { accountId: String(newAcc.id), accountName: newAcc.name });
     }
 }
 
@@ -353,7 +354,7 @@ function filterLogs(list, filters = {}) {
 function startWorker(account) {
     if (workers[account.id]) return; // 已运行
 
-    log('系统', `正在启动账号: ${account.name}`);
+    log('系统', `正在启动账号: ${account.name}`, { accountId: String(account.id), accountName: account.name });
 
     let child = null;
     if (process.pkg) {
@@ -400,12 +401,14 @@ function startWorker(account) {
     });
 
     child.on('error', (err) => {
-        log('系统', `账号 ${account.name} 子进程启动失败: ${err && err.message ? err.message : err}`);
+        log('系统', `账号 ${account.name} 子进程启动失败: ${err && err.message ? err.message : err}`, { accountId: String(account.id), accountName: account.name });
     });
 
     child.on('exit', (code, signal) => {
-        log('系统', `账号 ${account.name} 进程退出 (code=${code}, signal=${signal || 'none'})`);
         const current = workers[account.id];
+        const displayName = (current && current.name) || account.name;
+        log('系统', `账号 ${displayName} 进程退出 (code=${code}, signal=${signal || 'none'})`, { accountId: String(account.id), accountName: displayName });
+        
         if (current && current.process === child) {
             delete workers[account.id];
         }
@@ -476,16 +479,23 @@ function handleWorkerMessage(accountId, msg) {
         
         // 尝试更新昵称到 store
         if (msg.data && msg.data.status && msg.data.status.name) {
-             const newNick = msg.data.status.name;
-             // 避免频繁写入，只在内存中无昵称或不一致时更新（这里为了简单，只在内存注入，store更新交给 addOrUpdateAccount 显式调用）
-             // 但为了满足“扫码更新code后直接显示昵称”，我们需要确保 addOrUpdateAccount 被调用。
-             // 扫码登录是在 admin.js -> qrlogin.js 处理的，那里会调用 addOrUpdateAccount。
-             // 只要 qrlogin.js 能获取到昵称并传给 addOrUpdateAccount 即可。
-             // 如果是自动登录（startWorker），worker 会发送 status_sync。
-             // 我们可以选择在这里更新 store，但要小心性能。
-             // 鉴于 client.js 中 getAccounts 已经注入了 nick，前端轮询 /api/accounts 时就能看到。
-             // 所以不需要在这里强制写盘，除非为了持久化。
-             // 考虑到 client.js 的 getAccounts 注入逻辑依赖于 worker.status，只要 worker 运行中，就能显示。
+             const newNick = String(msg.data.status.name).trim();
+             // 忽略无效昵称
+             if (newNick && newNick !== '未知' && newNick !== '未登录') {
+                 // 避免频繁写入，只在内存中无昵称或不一致时更新
+                 if (worker.name !== newNick) {
+                     const oldName = worker.name;
+                     worker.name = newNick;
+                     addOrUpdateAccount({
+                         id: accountId,
+                         name: newNick,
+                     });
+                     // 仅在首次同步或名称变更时记录日志
+                     if (oldName !== newNick) {
+                         log('系统', `已同步账号昵称: ${oldName} -> ${newNick}`, { accountId, accountName: newNick });
+                     }
+                 }
+             }
         }
         
         const connected = !!(msg.data && msg.data.connection && msg.data.connection.connected);
@@ -538,7 +548,7 @@ function handleWorkerMessage(accountId, msg) {
         GLOBAL_LOGS.push(logEntry);
         if (GLOBAL_LOGS.length > 1000) GLOBAL_LOGS.shift();
     } else if (msg.type === 'error') {
-        log('错误', `账号[${accountId}]进程报错: ${msg.error}`);
+        log('错误', `账号[${accountId}]进程报错: ${msg.error}`, { accountId: String(accountId), accountName: worker.name });
     } else if (msg.type === 'ws_error') {
         const code = Number(msg.code) || 0;
         const message = msg.message || '';
@@ -553,7 +563,7 @@ function handleWorkerMessage(accountId, msg) {
         }
     } else if (msg.type === 'account_kicked') {
         const reason = msg.reason || '未知';
-        log('系统', `账号 ${worker.name} 被踢下线，自动删除账号信息`);
+        log('系统', `账号 ${worker.name} 被踢下线，自动删除账号信息`, { accountId: String(accountId), accountName: worker.name });
         triggerOfflineReminder({
             accountId,
             accountName: worker.name,

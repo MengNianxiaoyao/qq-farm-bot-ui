@@ -382,6 +382,8 @@ function sendLogin(onLoginSuccess) {
                     exp: userState.exp,
                 });
 
+                log('系统', `登录成功: ${userState.name} (Lv${userState.level})`);
+
                 console.log('');
                 console.log('========== 登录成功 ==========');
                 console.log(`  GID:    ${userState.gid}`);

@@ -36,7 +36,7 @@ function formatTime(seconds) {
 
 function getPlantRankings(sortBy = 'exp') {
     const plants = getAllPlants();
-    console.log(`[Analytics] getAllPlants returned ${plants.length} items`);
+    console.log(`[分析] 获取到 ${plants.length} 种作物`);
     
     // 筛选普通作物
     const normalPlants = plants.filter(p => {
@@ -45,7 +45,9 @@ function getPlantRankings(sortBy = 'exp') {
         // 放宽条件，只要有种子ID且有生长阶段数据
         return p.seed_id > 0 && p.grow_phases;
     });
-    console.log(`[Analytics] Found ${normalPlants.length} plants after filter`);
+    console.log(`[分析] 筛选出 ${normalPlants.length} 种普通作物`);
+
+
 
     const results = [];
     for (const plant of normalPlants) {

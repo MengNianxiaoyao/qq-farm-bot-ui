@@ -280,19 +280,6 @@ async function startBot(config) {
         loginReady = true;
         const state = getUserState();
 
-        // 自动同步昵称到账号配置
-        const accountId = process.env.FARM_ACCOUNT_ID;
-        if (accountId && state.name && state.name !== '未知' && state.name !== '未登录') {
-            try {
-                const cleanName = String(state.name).trim();
-                if (cleanName) {
-                    addOrUpdateAccount({ id: accountId, name: cleanName });
-                }
-            } catch (e) {
-                // ignore
-            }
-        }
-
         if (onSellGain) {
             networkEvents.off('sell', onSellGain);
         }

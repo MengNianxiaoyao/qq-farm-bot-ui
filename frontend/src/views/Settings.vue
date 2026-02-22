@@ -475,10 +475,10 @@ async function handleSaveOffline() {
           </div>
 
           <BaseInput
-            v-if="localOffline.channel === 'webhook'"
             v-model="localOffline.endpoint"
             label="接口地址"
             type="text"
+            :disabled="localOffline.channel !== 'webhook'"
           />
 
           <BaseInput

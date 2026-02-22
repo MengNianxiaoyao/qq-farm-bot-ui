@@ -472,24 +472,12 @@ function addOrUpdateAccount(acc) {
     if (acc.id) {
         const idx = data.accounts.findIndex(a => a.id === acc.id);
         if (idx >= 0) {
-            data.accounts[idx] = { 
-                ...data.accounts[idx], 
-                ...acc, 
-                // 只使用 name 字段存储备注
-                name: acc.name !== undefined ? acc.name : data.accounts[idx].name,
-                updatedAt: Date.now() 
-            };
-            // 确保不存储 nick 字段
-            if (data.accounts[idx].nick !== undefined) {
-                delete data.accounts[idx].nick;
-            }
+            data.accounts[idx] = { ...data.accounts[idx], ...acc, name: acc.name !== undefined ? acc.name : data.accounts[idx].name, updatedAt: Date.now() };
         }
     } else {
         const id = data.nextId++;
-        const newAccount = {
-            ...acc,
+        data.accounts.push({
             id: String(id),
-            // 使用 name 字段存储备注，默认为 "账号ID"
             name: acc.name || `账号${id}`,
             code: acc.code || '',
             platform: acc.platform || 'qq',
@@ -498,12 +486,7 @@ function addOrUpdateAccount(acc) {
             avatar: acc.avatar || acc.avatarUrl || '',
             createdAt: Date.now(),
             updatedAt: Date.now(),
-        };
-        // 确保不存储 nick 字段
-        if (newAccount.nick !== undefined) {
-            delete newAccount.nick;
-        }
-        data.accounts.push(newAccount);
+        });
     }
     saveAccounts(data);
     return data;

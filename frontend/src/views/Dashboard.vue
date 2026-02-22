@@ -13,20 +13,11 @@ import { useStatusStore } from '@/stores/status'
 const statusStore = useStatusStore()
 const accountStore = useAccountStore()
 const bagStore = useBagStore()
-const { status, logs: statusLogs, error: apiError } = storeToRefs(statusStore)
+const { status, logs: statusLogs } = storeToRefs(statusStore)
 const { currentAccountId, logs: accountLogs } = storeToRefs(accountStore)
 const { dashboardItems } = storeToRefs(bagStore)
 const logContainer = ref<HTMLElement | null>(null)
 const autoScroll = ref(true)
-
-const wsErrorMessage = computed(() => {
-  const wsError = status.value?.wsError
-  if (wsError && Number(wsError.code) === 400)
-    return `WebSocket 连接失败: ${wsError.msg || '请检查账号状态'}`
-  return ''
-})
-
-const error = computed(() => apiError.value || wsErrorMessage.value)
 
 const allLogs = computed(() => {
   const sLogs = statusLogs.value || []
@@ -75,14 +66,16 @@ const events = [
 ]
 
 const displayName = computed(() => {
-  // Check login status first
-  if (!status.value?.connection?.connected)
-    return '未登录'
-
   // Try to use nickname from status (game server)
   const gameName = status.value?.status?.name
   if (gameName)
     return gameName
+
+  // Check login status
+  if (!status.value?.connection?.connected) {
+    const account = accountStore.currentAccount
+    return account?.name || '未登录'
+  }
 
   // Fallback to account name (usually ID) or '未命名'
   const account = accountStore.currentAccount
@@ -103,10 +96,6 @@ const expRate = computed(() => {
 const timeToLevel = computed(() => {
   const gain = status.value?.sessionExpGained || 0
   const uptime = status.value?.uptime || 0
-  // Note: status.value.status.level is level, progress is in expProgress or levelProgress?
-  // Existing code used status?.levelProgress.
-  // Old code used data.expProgress.
-  // Let's stick to what's in status store, assuming it maps correctly.
   const current = status.value?.levelProgress?.current || 0
   const needed = status.value?.levelProgress?.needed || 0
 
@@ -296,16 +285,10 @@ useIntervalFn(updateCountdowns, 1000)
 
 <template>
   <div class="pt-6 space-y-6">
-    <!-- Error Alert -->
-    <div v-if="error" class="mb-4 flex items-center gap-2 border border-red-200 rounded-lg bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-      <div class="i-carbon-warning-filled text-xl" />
-      <span>{{ error }}</span>
-    </div>
-
     <!-- Status Cards -->
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 md:grid-cols-2">
       <!-- Account & Exp -->
-      <div class="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+      <div class="flex flex-col rounded-lg bg-white p-4 shadow dark:bg-gray-800">
         <div class="mb-2 flex items-start justify-between">
           <div class="flex items-center gap-1.5 text-sm text-gray-500">
             <div class="i-fas-user-circle" />
@@ -320,7 +303,7 @@ useIntervalFn(updateCountdowns, 1000)
         </div>
 
         <!-- Level Progress -->
-        <div class="mt-3">
+        <div class="mt-auto">
           <div class="mb-1 flex justify-between text-xs text-gray-500">
             <div class="flex items-center gap-1">
               <div class="i-fas-bolt text-blue-400" />
@@ -349,7 +332,7 @@ useIntervalFn(updateCountdowns, 1000)
               <div class="i-fas-coins text-yellow-500" />
               金币
             </div>
-            <div class="text-lg text-yellow-600 font-bold dark:text-yellow-500">
+            <div class="text-2xl text-yellow-600 font-bold dark:text-yellow-500">
               {{ status?.status?.gold || 0 }}
             </div>
             <div v-if="status?.sessionGoldGained > 0" class="text-[10px] text-green-500">
@@ -361,7 +344,7 @@ useIntervalFn(updateCountdowns, 1000)
               <div class="i-fas-ticket-alt text-emerald-400" />
               点券
             </div>
-            <div class="text-lg text-emerald-500 font-bold dark:text-emerald-400">
+            <div class="text-2xl text-emerald-500 font-bold dark:text-emerald-400">
               {{ status?.status?.coupon || 0 }}
             </div>
             <div v-if="status?.sessionCouponGained > 0" class="text-[10px] text-green-500">

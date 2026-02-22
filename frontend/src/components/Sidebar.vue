@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { useDateFormat, useNow } from '@vueuse/core'
+import { useDateFormat, useIntervalFn, useNow } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api'
 import AccountModal from '@/components/AccountModal.vue'
+import { menuRoutes } from '@/router/menu'
 
 import RemarkModal from '@/components/RemarkModal.vue'
 import { useAccountStore } from '@/stores/account'
@@ -30,9 +31,6 @@ const serverUptimeBase = ref(0)
 const lastPingTime = ref(Date.now())
 const now = useNow()
 const formattedTime = useDateFormat(now, 'YYYY-MM-DD HH:mm:ss')
-
-let timer: any = null
-let statusTimer: any = null
 
 async function checkConnection() {
   try {
@@ -86,19 +84,13 @@ function openRemarkModal(acc: any) {
 onMounted(() => {
   accountStore.fetchAccounts()
   checkConnection()
-  timer = setInterval(checkConnection, 30000)
-  statusTimer = setInterval(refreshStatus, 10000)
 })
+
+useIntervalFn(checkConnection, 30000)
+useIntervalFn(refreshStatus, 10000)
 
 watch(currentAccount, () => {
   refreshStatus()
-})
-
-onUnmounted(() => {
-  if (timer)
-    clearInterval(timer)
-  if (statusTimer)
-    clearInterval(statusTimer)
 })
 
 const uptime = computed(() => {
@@ -160,15 +152,11 @@ const connectionStatus = computed(() => {
   }
 })
 
-const navItems = [
-  { path: '/', label: '概览', icon: 'i-carbon-chart-pie' },
-  { path: '/farm', label: '农场', icon: 'i-carbon-sprout' },
-  { path: '/bag', label: '背包', icon: 'i-carbon-box' },
-  { path: '/friends', label: '好友', icon: 'i-carbon-user-multiple' },
-  { path: '/accounts', label: '账号', icon: 'i-carbon-user-settings' },
-  { path: '/analytics', label: '分析', icon: 'i-carbon-analytics' },
-  { path: '/settings', label: '设置', icon: 'i-carbon-settings' },
-]
+const navItems = menuRoutes.map(item => ({
+  path: item.path ? `/${item.path}` : '/',
+  label: item.label,
+  icon: item.icon,
+}))
 
 function selectAccount(acc: any) {
   accountStore.setCurrentAccount(acc)

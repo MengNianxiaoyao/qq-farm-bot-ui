@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useStorage } from '@vueuse/core'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -9,6 +10,7 @@ const router = useRouter()
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const token = useStorage('admin_token', '')
 
 async function handleLogin() {
   loading.value = true
@@ -16,7 +18,7 @@ async function handleLogin() {
   try {
     const res = await api.post('/api/login', { password: password.value })
     if (res.data.ok) {
-      localStorage.setItem('admin_token', res.data.data.token)
+      token.value = res.data.data.token
       router.push('/')
     }
     else {

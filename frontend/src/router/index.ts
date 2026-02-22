@@ -1,8 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useStorage } from '@vueuse/core'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
+import { menuRoutes } from './menu'
 
 NProgress.configure({ showSpinner: false })
+
+const adminToken = useStorage('admin_token', '')
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,43 +14,11 @@ const router = createRouter({
     {
       path: '/',
       component: () => import('@/layouts/DefaultLayout.vue'),
-      children: [
-        {
-          path: '',
-          name: 'dashboard',
-          component: () => import('@/views/Dashboard.vue'),
-        },
-        {
-          path: 'farm',
-          name: 'farm',
-          component: () => import('@/views/Farm.vue'),
-        },
-        {
-          path: 'bag',
-          name: 'bag',
-          component: () => import('@/views/Bag.vue'),
-        },
-        {
-          path: '/friends',
-          name: 'friends',
-          component: () => import('@/views/Friends.vue'),
-        },
-        {
-          path: 'accounts',
-          name: 'accounts',
-          component: () => import('@/views/Accounts.vue'),
-        },
-        {
-          path: 'analytics',
-          name: 'analytics',
-          component: () => import('@/views/Analytics.vue'),
-        },
-        {
-          path: '/settings',
-          name: 'Settings',
-          component: () => import('@/views/Settings.vue'),
-        },
-      ],
+      children: menuRoutes.map(route => ({
+        path: route.path,
+        name: route.name,
+        component: route.component,
+      })),
     },
     {
       path: '/login',
@@ -58,8 +30,7 @@ const router = createRouter({
 
 router.beforeEach((to, _from) => {
   NProgress.start()
-  const token = localStorage.getItem('admin_token')
-  if (to.name !== 'login' && !token)
+  if (to.name !== 'login' && !adminToken.value)
     return { name: 'login' }
 })
 

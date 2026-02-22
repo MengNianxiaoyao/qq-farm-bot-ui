@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
@@ -137,7 +138,6 @@ const nextFriendCheck = ref('--')
 const localUptime = ref(0)
 let localNextFarmRemainSec = 0
 let localNextFriendRemainSec = 0
-let countdownTimer: any = null
 
 function updateCountdowns() {
   // Update uptime
@@ -175,8 +175,6 @@ watch(status, (newVal) => {
     localUptime.value = newVal.uptime
   }
 }, { deep: true })
-
-let timer: any = null
 
 function formatDuration(seconds: number) {
   if (seconds <= 0)
@@ -279,18 +277,12 @@ watch(allLogs, () => {
 
 onMounted(() => {
   refresh()
-  // Auto refresh every 5s
-  timer = setInterval(refresh, 5000)
-  // Countdown timer (every 1s)
-  countdownTimer = setInterval(updateCountdowns, 1000)
 })
 
-onUnmounted(() => {
-  if (timer)
-    clearInterval(timer)
-  if (countdownTimer)
-    clearInterval(countdownTimer)
-})
+// Auto refresh every 5s
+useIntervalFn(refresh, 5000)
+// Countdown timer (every 1s)
+useIntervalFn(updateCountdowns, 1000)
 </script>
 
 <template>

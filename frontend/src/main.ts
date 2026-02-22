@@ -16,7 +16,7 @@ app.use(router)
 // Global Error Handling
 const toast = useToastStore()
 
-app.config.errorHandler = (err: any, instance, info) => {
+app.config.errorHandler = (err: any, _instance, info) => {
   console.error('Global Vue Error:', err, info)
   const message = err.message || String(err)
   // Ignore some benign errors if needed
@@ -34,7 +34,7 @@ window.addEventListener('unhandledrejection', (event) => {
   toast.error(`异步错误: ${message}`)
 })
 
-window.onerror = (message, source, lineno, colno, error) => {
+window.onerror = (message, _source, _lineno, _colno, error) => {
   console.error('Global Error:', message, error)
   // Script error. usually cross-origin
   if (String(message).includes('Script error')) return

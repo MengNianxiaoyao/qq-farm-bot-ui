@@ -15,7 +15,7 @@ function getIcon(type: string) {
   }
 }
 
-function getBgColor(type: string) {
+function getBgColor(_type: string) {
   // Tailwind colors with some transparency?
   // Actually, standard white/dark background with colored border/icon is usually cleaner.
   return 'bg-white dark:bg-gray-800 border-l-4'

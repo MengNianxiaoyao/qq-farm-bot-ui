@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AccountModal from '@/components/AccountModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
@@ -16,19 +17,14 @@ const showDeleteConfirm = ref(false)
 const deleteLoading = ref(false)
 const editingAccount = ref<any>(null)
 const accountToDelete = ref<any>(null)
-const pollTimer = ref<any>(null)
 
 onMounted(() => {
   accountStore.fetchAccounts()
-  pollTimer.value = setInterval(() => {
-    accountStore.fetchAccounts()
-  }, 3000)
 })
 
-onUnmounted(() => {
-  if (pollTimer.value)
-    clearInterval(pollTimer.value)
-})
+useIntervalFn(() => {
+  accountStore.fetchAccounts()
+}, 3000)
 
 function openSettings(account: any) {
   accountStore.selectAccount(account.id)

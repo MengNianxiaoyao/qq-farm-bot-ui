@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onUnmounted, reactive, ref, watch } from 'vue'
+import { useIntervalFn } from '@vueuse/core'
+import { reactive, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseTextarea from '@/components/ui/BaseTextarea.vue'
@@ -17,7 +18,6 @@ const activeTab = ref('qr') // qr, manual
 const loading = ref(false)
 const qrData = ref<{ image?: string, code: string, qrcode?: string, url?: string } | null>(null)
 const qrStatus = ref('')
-const qrTimer = ref<any>(null)
 const errorMessage = ref('')
 
 const form = reactive({
@@ -53,63 +53,53 @@ async function loadQRCode() {
   }
 }
 
-function stopQRCheck() {
-  if (qrTimer.value) {
-    clearInterval(qrTimer.value)
-    qrTimer.value = null
-  }
-}
+const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(async () => {
+  if (!qrData.value)
+    return
+  try {
+    const res = await api.post('/api/qr/check', { code: qrData.value.code })
+    if (res.data.ok) {
+      const status = res.data.data.status
+      if (status === 'OK') {
+        // Login success
+        stopQRCheck()
+        qrStatus.value = '登录成功!'
+        // Auto fill form and submit
+        const { uin, code: authCode, nickname } = res.data.data
 
-function startQRCheck() {
-  stopQRCheck()
-  qrTimer.value = setInterval(async () => {
-    if (!qrData.value)
-      return
-    try {
-      const res = await api.post('/api/qr/check', { code: qrData.value.code })
-      if (res.data.ok) {
-        const status = res.data.data.status
-        if (status === 'OK') {
-          // Login success
-          stopQRCheck()
-          qrStatus.value = '登录成功!'
-          // Auto fill form and submit
-          const { uin, code: authCode, nickname } = res.data.data
+        // Use name from form if provided, otherwise default
+        let accName = form.name.trim()
+        if (!accName) {
+          // 优先使用 nickname，其次使用 uin
+          accName = nickname || (uin ? String(uin) : '扫码账号')
+        }
 
-          // Use name from form if provided, otherwise default
-          let accName = form.name.trim()
-          if (!accName) {
-            // 优先使用 nickname，其次使用 uin
-            accName = nickname || (uin ? String(uin) : '扫码账号')
-          }
-
-          // We need to add account with this data
-          await addAccount({
-            id: props.editData?.id,
-            uin,
-            code: authCode,
-            loginType: 'qr',
-            name: props.editData ? (props.editData.name || accName) : accName,
-            platform: 'qq',
-          })
-        }
-        else if (status === 'Used') {
-          qrStatus.value = '二维码已失效' // Consistent text
-          stopQRCheck()
-        }
-        else if (status === 'Wait') {
-          qrStatus.value = '等待扫码...'
-        }
-        else {
-          qrStatus.value = `错误: ${res.data.data.error}`
-        }
+        // We need to add account with this data
+        await addAccount({
+          id: props.editData?.id,
+          uin,
+          code: authCode,
+          loginType: 'qr',
+          name: props.editData ? (props.editData.name || accName) : accName,
+          platform: 'qq',
+        })
+      }
+      else if (status === 'Used') {
+        qrStatus.value = '二维码已失效' // Consistent text
+        stopQRCheck()
+      }
+      else if (status === 'Wait') {
+        qrStatus.value = '等待扫码...'
+      }
+      else {
+        qrStatus.value = `错误: ${res.data.data.error}`
       }
     }
-    catch (e) {
-      console.error(e)
-    }
-  }, 1000) // 1s interval matches old frontend
-}
+  }
+  catch (e) {
+    console.error(e)
+  }
+}, 1000, { immediate: false })
 
 async function addAccount(data: any) {
   loading.value = true
@@ -167,10 +157,6 @@ function close() {
   stopQRCheck()
   emit('close')
 }
-
-onUnmounted(() => {
-  stopQRCheck()
-})
 
 watch(() => props.show, (newVal) => {
   if (newVal) {

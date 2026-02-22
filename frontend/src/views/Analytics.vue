@@ -130,9 +130,64 @@ function formatGrowTime(seconds: any) {
       暂无数据
     </div>
 
-    <div v-else class="overflow-hidden border border-gray-200 rounded-lg bg-white shadow dark:border-gray-700 dark:bg-gray-800">
-      <div class="overflow-x-auto">
-        <table class="w-full whitespace-nowrap text-left text-sm">
+    <div v-else class="space-y-4">
+      <!-- Mobile Card View -->
+      <div class="block sm:hidden space-y-4">
+        <div v-for="(item, idx) in list" :key="idx" class="rounded-lg bg-white p-4 shadow dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="relative h-12 w-12 flex shrink-0 items-center justify-center overflow-hidden border border-gray-200 rounded-lg bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
+              <img
+                v-if="item.image && !imageErrors[item.seedId]"
+                :src="item.image"
+                class="h-10 w-10 object-contain"
+                loading="lazy"
+                @error="imageErrors[item.seedId] = true"
+              >
+              <div v-else class="i-carbon-sprout text-2xl text-gray-400" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <div class="text-gray-900 font-bold dark:text-gray-100 truncate">
+                  {{ item.name }}
+                </div>
+                <div class="text-xs text-gray-500">ID:{{ item.seedId }}</div>
+              </div>
+              <div class="mt-1 flex items-center gap-2">
+                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 font-medium dark:bg-gray-700">Lv{{ formatLv(item.level) }}</span>
+                <span class="text-xs text-gray-400">{{ item.seasons }}季</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+            <div class="flex flex-col">
+              <span class="text-xs text-gray-500">时间</span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">{{ formatGrowTime(item.growTime) }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xs text-gray-500">经验/时</span>
+              <span class="font-bold text-purple-600 dark:text-purple-400">{{ item.expPerHour }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xs text-gray-500">利润/时</span>
+              <span class="font-bold text-amber-500">{{ item.profitPerHour ?? '-' }}</span>
+            </div>
+             <div class="flex flex-col">
+              <span class="text-xs text-gray-500">普肥经验/时</span>
+              <span class="font-bold text-blue-600 dark:text-blue-400">{{ item.normalFertilizerExpPerHour ?? '-' }}</span>
+            </div>
+             <div class="flex flex-col">
+              <span class="text-xs text-gray-500">普肥利润/时</span>
+              <span class="font-bold text-green-500">{{ item.normalFertilizerProfitPerHour ?? '-' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Table View -->
+      <div class="hidden sm:block overflow-hidden border border-gray-200 rounded-lg bg-white shadow dark:border-gray-700 dark:bg-gray-800">
+        <div class="overflow-x-auto">
+          <table class="w-full whitespace-nowrap text-left text-sm">
           <thead class="border-b bg-gray-50 text-xs text-gray-500 uppercase dark:border-gray-700 dark:bg-gray-700/50 dark:text-gray-400">
             <tr>
               <th class="sticky left-0 z-10 bg-gray-50 px-4 py-3 font-medium shadow-[1px_0_0_0_rgba(0,0,0,0.05)] dark:bg-gray-800 dark:shadow-[1px_0_0_0_rgba(255,255,255,0.05)]">
@@ -213,5 +268,6 @@ function formatGrowTime(seconds: any) {
         </table>
       </div>
     </div>
+  </div>
   </div>
 </template>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import ToastContainer from '@/components/ToastContainer.vue'
 </script>
 
 <template>
   <div class="h-screen w-screen overflow-hidden bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
     <RouterView />
+    <ToastContainer />
   </div>
 </template>
 

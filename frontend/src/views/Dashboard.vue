@@ -12,11 +12,24 @@ import { useStatusStore } from '@/stores/status'
 const statusStore = useStatusStore()
 const accountStore = useAccountStore()
 const bagStore = useBagStore()
-const { status, logs, error } = storeToRefs(statusStore)
-const { currentAccountId } = storeToRefs(accountStore)
+const { status, logs: statusLogs, error } = storeToRefs(statusStore)
+const { currentAccountId, logs: accountLogs } = storeToRefs(accountStore)
 const { dashboardItems } = storeToRefs(bagStore)
 const logContainer = ref<HTMLElement | null>(null)
 const autoScroll = ref(true)
+
+const allLogs = computed(() => {
+  const sLogs = statusLogs.value || []
+  const aLogs = (accountLogs.value || []).map((l: any) => ({
+    ts: new Date(l.time).getTime(),
+    time: l.time,
+    tag: l.action === 'Error' ? '错误' : '系统',
+    msg: l.reason ? `${l.msg} (${l.reason})` : l.msg,
+    isAccountLog: true,
+  }))
+
+  return [...sLogs, ...aLogs].sort((a, b) => a.ts - b.ts)
+})
 
 const filter = reactive({
   module: '',
@@ -238,6 +251,7 @@ function refresh() {
       keyword: filter.keyword || undefined,
       isWarn: filter.isWarn ? 'true' : undefined,
     })
+    accountStore.fetchLogs()
     bagStore.fetchBag(currentAccountId.value)
   }
 }
@@ -255,7 +269,7 @@ function onLogScroll(e: Event) {
 }
 
 // Auto scroll logs
-watch(logs, () => {
+watch(allLogs, () => {
   nextTick(() => {
     if (logContainer.value && autoScroll.value) {
       logContainer.value.scrollTop = logContainer.value.scrollHeight
@@ -473,10 +487,10 @@ onUnmounted(() => {
         </div>
 
         <div ref="logContainer" class="h-[500px] overflow-y-auto rounded bg-gray-50 p-4 text-sm leading-relaxed font-mono dark:bg-gray-900" @scroll="onLogScroll">
-          <div v-if="!logs.length" class="py-8 text-center text-gray-400">
+          <div v-if="!allLogs.length" class="py-8 text-center text-gray-400">
             暂无日志
           </div>
-          <div v-for="log in logs" :key="log.ts" class="mb-1 break-all">
+          <div v-for="log in allLogs" :key="log.ts + log.msg" class="mb-1 break-all">
             <span class="mr-2 select-none text-gray-400">[{{ formatLogTime(log.time) }}]</span>
             <span class="mr-2 rounded px-1.5 py-0.5 text-xs font-bold" :class="getLogTagClass(log.tag)">{{ log.tag }}</span>
             <span :class="getLogMsgClass(log.tag)">{{ log.msg }}</span>

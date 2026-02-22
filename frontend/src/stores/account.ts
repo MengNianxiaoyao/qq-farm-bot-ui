@@ -64,37 +64,22 @@ export const useAccountStore = defineStore('account', () => {
   }
 
   async function startAccount(id: string) {
-    try {
-      await api.post(`/api/accounts/${id}/start`)
-      await fetchAccounts()
-    }
-    catch (e) {
-      console.error(e)
-    }
+    await api.post(`/api/accounts/${id}/start`)
+    await fetchAccounts()
   }
 
   async function stopAccount(id: string) {
-    try {
-      await api.post(`/api/accounts/${id}/stop`)
-      await fetchAccounts()
-    }
-    catch (e) {
-      console.error(e)
-    }
+    await api.post(`/api/accounts/${id}/stop`)
+    await fetchAccounts()
   }
 
   async function deleteAccount(id: string) {
-    try {
-      await api.delete(`/api/accounts/${id}`)
-      if (currentAccountId.value === id) {
-        currentAccountId.value = ''
-        localStorage.removeItem('current_account_id')
-      }
-      await fetchAccounts()
+    await api.delete(`/api/accounts/${id}`)
+    if (currentAccountId.value === id) {
+      currentAccountId.value = ''
+      localStorage.removeItem('current_account_id')
     }
-    catch (e) {
-      console.error(e)
-    }
+    await fetchAccounts()
   }
 
   async function fetchLogs() {

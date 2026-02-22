@@ -105,6 +105,25 @@ function syncLocalSettings() {
         fertilizer: 'none',
       }
     }
+    else {
+      // Merge with defaults to ensure all keys exist
+      const defaults = {
+        farm: false,
+        task: false,
+        sell: false,
+        friend: false,
+        farm_push: false,
+        land_upgrade: false,
+        friend_steal: false,
+        friend_help: false,
+        friend_bad: false,
+        fertilizer: 'none',
+      }
+      localSettings.value.automation = {
+        ...defaults,
+        ...localSettings.value.automation,
+      }
+    }
 
     // Sync offline settings (global)
     if (settings.value.offlineReminder) {
@@ -179,13 +198,17 @@ async function saveAccountSettings() {
   if (!currentAccountId.value)
     return
   saving.value = true
-  const res = await settingStore.saveSettings(currentAccountId.value, localSettings.value)
-  saving.value = false
-  if (res.ok) {
-    showAlert('账号设置已保存')
+  try {
+    const res = await settingStore.saveSettings(currentAccountId.value, localSettings.value)
+    if (res.ok) {
+      showAlert('账号设置已保存')
+    }
+    else {
+      showAlert(`保存失败: ${res.error}`, 'danger')
+    }
   }
-  else {
-    showAlert(`保存失败: ${res.error}`, 'danger')
+  finally {
+    saving.value = false
   }
 }
 
@@ -204,28 +227,36 @@ async function handleChangePassword() {
   }
 
   passwordSaving.value = true
-  const res = await settingStore.changeAdminPassword(passwordForm.value.old, passwordForm.value.new)
-  passwordSaving.value = false
+  try {
+    const res = await settingStore.changeAdminPassword(passwordForm.value.old, passwordForm.value.new)
 
-  if (res.ok) {
-    showAlert('密码修改成功')
-    passwordForm.value = { old: '', new: '', confirm: '' }
+    if (res.ok) {
+      showAlert('密码修改成功')
+      passwordForm.value = { old: '', new: '', confirm: '' }
+    }
+    else {
+      showAlert(`修改失败: ${res.error || '未知错误'}`, 'danger')
+    }
   }
-  else {
-    showAlert(`修改失败: ${res.error || '未知错误'}`, 'danger')
+  finally {
+    passwordSaving.value = false
   }
 }
 
 async function handleSaveOffline() {
   offlineSaving.value = true
-  const res = await settingStore.saveOfflineConfig(localOffline.value)
-  offlineSaving.value = false
+  try {
+    const res = await settingStore.saveOfflineConfig(localOffline.value)
 
-  if (res.ok) {
-    showAlert('下线提醒设置已保存')
+    if (res.ok) {
+      showAlert('下线提醒设置已保存')
+    }
+    else {
+      showAlert(`保存失败: ${res.error || '未知错误'}`, 'danger')
+    }
   }
-  else {
-    showAlert(`保存失败: ${res.error || '未知错误'}`, 'danger')
+  finally {
+    offlineSaving.value = false
   }
 }
 </script>

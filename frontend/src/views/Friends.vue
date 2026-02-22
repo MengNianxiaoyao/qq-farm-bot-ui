@@ -149,6 +149,14 @@ function getFriendStatusText(friend: any) {
     info.push(`虫${p.insectNum}`)
   return info.length ? info.join(' ') : '无操作'
 }
+function getSafeImageUrl(url: string) {
+  if (!url)
+    return ''
+  if (url.startsWith('http://'))
+    return url.replace('http://', 'https://')
+  return url
+}
+
 </script>
 
 <template>
@@ -201,7 +209,7 @@ function getFriendStatusText(friend: any) {
             <div class="h-10 w-10 flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 ring-1 ring-gray-100 dark:bg-gray-600 dark:ring-gray-700">
               <img
                 v-if="friend.uin || friend.gid"
-                :src="`http://q1.qlogo.cn/g?b=qq&nk=${friend.uin || friend.gid}&s=100`"
+                :src="`https://q1.qlogo.cn/g?b=qq&nk=${friend.uin || friend.gid}&s=100`"
                 class="h-full w-full object-cover"
                 loading="lazy"
                 @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
@@ -273,7 +281,7 @@ function getFriendStatusText(friend: any) {
               <div class="mb-1 mt-4 h-10 w-10 flex items-center justify-center">
                 <img
                   v-if="land.seedImage"
-                  :src="land.seedImage"
+                  :src="getSafeImageUrl(land.seedImage)"
                   class="max-h-full max-w-full object-contain"
                   loading="lazy"
                   referrerpolicy="no-referrer"

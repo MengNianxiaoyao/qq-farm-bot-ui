@@ -34,9 +34,6 @@ export const useFarmStore = defineStore('farm', () => {
         summary.value = data.data.summary || {}
       }
     }
-    catch (e) {
-      console.error(e)
-    }
     finally {
       loading.value = false
     }
@@ -45,30 +42,20 @@ export const useFarmStore = defineStore('farm', () => {
   async function fetchSeeds(accountId: string) {
     if (!accountId)
       return
-    try {
-      const { data } = await api.get('/api/seeds', {
-        headers: { 'x-account-id': accountId },
-      })
-      if (data && data.ok)
-        seeds.value = data.data || []
-    }
-    catch (e) {
-      console.error(e)
-    }
+    const { data } = await api.get('/api/seeds', {
+      headers: { 'x-account-id': accountId },
+    })
+    if (data && data.ok)
+      seeds.value = data.data || []
   }
 
   async function operate(accountId: string, opType: string) {
     if (!accountId)
       return
-    try {
-      await api.post('/api/farm/operate', { opType }, {
-        headers: { 'x-account-id': accountId },
-      })
-      await fetchLands(accountId)
-    }
-    catch (e) {
-      console.error(e)
-    }
+    await api.post('/api/farm/operate', { opType }, {
+      headers: { 'x-account-id': accountId },
+    })
+    await fetchLands(accountId)
   }
 
   return { lands, summary, seeds, loading, fetchLands, fetchSeeds, operate }

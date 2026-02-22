@@ -20,9 +20,6 @@ export const useFriendStore = defineStore('friend', () => {
         friends.value = res.data.data || []
       }
     }
-    catch (e) {
-      console.error(e)
-    }
     finally {
       loading.value = false
     }
@@ -40,9 +37,6 @@ export const useFriendStore = defineStore('friend', () => {
         friendLands.value[friendId] = res.data.data.lands || []
       }
     }
-    catch (e) {
-      console.error(e)
-    }
     finally {
       friendLandsLoading.value[friendId] = false
     }
@@ -51,19 +45,14 @@ export const useFriendStore = defineStore('friend', () => {
   async function operate(accountId: string, friendId: string, opType: string) {
     if (!accountId || !friendId)
       return
-    try {
-      await api.post(`/api/friend/${friendId}/op`, { opType }, {
-        headers: { 'x-account-id': accountId },
-      })
-      // Refresh friend list to update status counts
-      await fetchFriends(accountId)
-      // If lands are open, refresh lands too
-      if (friendLands.value[friendId]) {
-        await fetchFriendLands(accountId, friendId)
-      }
-    }
-    catch (e) {
-      console.error(e)
+    await api.post(`/api/friend/${friendId}/op`, { opType }, {
+      headers: { 'x-account-id': accountId },
+    })
+    // Refresh friend list to update status counts
+    await fetchFriends(accountId)
+    // If lands are open, refresh lands too
+    if (friendLands.value[friendId]) {
+      await fetchFriendLands(accountId, friendId)
     }
   }
 

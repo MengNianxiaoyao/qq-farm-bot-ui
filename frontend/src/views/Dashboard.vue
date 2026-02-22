@@ -13,11 +13,20 @@ import { useStatusStore } from '@/stores/status'
 const statusStore = useStatusStore()
 const accountStore = useAccountStore()
 const bagStore = useBagStore()
-const { status, logs: statusLogs, error } = storeToRefs(statusStore)
+const { status, logs: statusLogs, error: apiError } = storeToRefs(statusStore)
 const { currentAccountId, logs: accountLogs } = storeToRefs(accountStore)
 const { dashboardItems } = storeToRefs(bagStore)
 const logContainer = ref<HTMLElement | null>(null)
 const autoScroll = ref(true)
+
+const wsErrorMessage = computed(() => {
+  const wsError = status.value?.wsError
+  if (wsError && Number(wsError.code) === 400)
+    return `WebSocket 连接失败: ${wsError.msg || '请检查账号状态'}`
+  return ''
+})
+
+const error = computed(() => apiError.value || wsErrorMessage.value)
 
 const allLogs = computed(() => {
   const sLogs = statusLogs.value || []

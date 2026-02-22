@@ -208,7 +208,7 @@ watch(
             <div class="h-8 w-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 ring-2 ring-white dark:bg-gray-600 dark:ring-gray-700">
               <img
                 v-if="currentAccount?.uin"
-                :src="`http://q1.qlogo.cn/g?b=qq&nk=${currentAccount.uin}&s=100`"
+                :src="`https://q1.qlogo.cn/g?b=qq&nk=${currentAccount.uin}&s=100`"
                 class="h-full w-full object-cover"
                 @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
               >
@@ -245,7 +245,7 @@ watch(
               >
                 <div class="h-6 w-6 flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 dark:bg-gray-600">
                   <img
-                    :src="`http://q1.qlogo.cn/g?b=qq&nk=${acc.uin}&s=100`"
+                    :src="`https://q1.qlogo.cn/g?b=qq&nk=${acc.uin}&s=100`"
                     class="h-full w-full object-cover"
                     @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
                   >

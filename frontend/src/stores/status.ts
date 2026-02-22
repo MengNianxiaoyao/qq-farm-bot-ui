@@ -18,6 +18,7 @@ export const useStatusStore = defineStore('status', () => {
       })
       if (res.data.ok) {
         status.value = res.data.data
+        error.value = ''
       }
       else {
         error.value = res.data.error
@@ -34,27 +35,23 @@ export const useStatusStore = defineStore('status', () => {
   async function fetchLogs(accountId: string, options: any = {}) {
     if (!accountId && options.accountId !== 'all')
       return
-    try {
-      const params: any = { limit: 100, ...options }
-      // If querying 'all' accounts, we might need to adjust headers or params
-      const headers: any = {}
-      if (accountId && accountId !== 'all') {
-        headers['x-account-id'] = accountId
-      }
-      else {
-        params.accountId = 'all'
-      }
-
-      const res = await api.get('/api/logs', {
-        headers,
-        params,
-      })
-      if (res.data.ok) {
-        logs.value = res.data.data
-      }
+    const params: any = { limit: 100, ...options }
+    // If querying 'all' accounts, we might need to adjust headers or params
+    const headers: any = {}
+    if (accountId && accountId !== 'all') {
+      headers['x-account-id'] = accountId
     }
-    catch (e: any) {
-      console.error(e)
+    else {
+      params.accountId = 'all'
+    }
+
+    const res = await api.get('/api/logs', {
+      headers,
+      params,
+    })
+    if (res.data.ok) {
+      logs.value = res.data.data
+      error.value = ''
     }
   }
 

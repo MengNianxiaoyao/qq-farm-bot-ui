@@ -101,9 +101,6 @@ export const useSettingStore = defineStore('setting', () => {
         }
       }
     }
-    catch (e) {
-      console.error(e)
-    }
     finally {
       loading.value = false
     }
@@ -137,10 +134,6 @@ export const useSettingStore = defineStore('setting', () => {
       await fetchSettings(accountId)
       return { ok: true }
     }
-    catch (e: any) {
-      console.error(e)
-      return { ok: false, error: e.message }
-    }
     finally {
       loading.value = false
     }
@@ -156,9 +149,6 @@ export const useSettingStore = defineStore('setting', () => {
       }
       return { ok: false, error: 'Failed to save' }
     }
-    catch (e: any) {
-      return { ok: false, error: e.message }
-    }
     finally {
       loading.value = false
     }
@@ -169,9 +159,6 @@ export const useSettingStore = defineStore('setting', () => {
     try {
       const res = await api.post('/api/admin/change-password', { oldPassword, newPassword })
       return res.data
-    }
-    catch (e: any) {
-      return { ok: false, error: e.response?.data?.error || e.message }
     }
     finally {
       loading.value = false

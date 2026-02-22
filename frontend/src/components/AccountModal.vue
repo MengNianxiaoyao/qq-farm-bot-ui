@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseTextarea from '@/components/ui/BaseTextarea.vue'
@@ -100,6 +100,30 @@ const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(async () => {
     console.error(e)
   }
 }, 1000, { immediate: false })
+
+const isMobile = computed(() => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent))
+
+function openQRCodeLoginUrl() {
+  if (!qrData.value?.url)
+    return
+
+  const url = qrData.value.url
+  if (!isMobile.value) {
+    window.open(url, '_blank')
+    return
+  }
+
+  // Mobile Deep Link logic
+  try {
+    const b64 = btoa(unescape(encodeURIComponent(url)))
+    const qqDeepLink = `mqqapi://forward/url?url_prefix=${encodeURIComponent(b64)}&version=1&src_type=web`
+    window.location.href = qqDeepLink
+  }
+  catch (e) {
+    console.error('Deep link error:', e)
+    window.location.href = url
+  }
+}
 
 async function addAccount(data: any) {
   loading.value = true
@@ -243,7 +267,15 @@ watch(() => props.show, (newVal) => {
             <BaseButton variant="text" size="sm" @click="loadQRCode">
               刷新二维码
             </BaseButton>
-            <a v-if="qrData?.url" :href="qrData.url" target="_blank" class="text-sm text-blue-600 md:hidden hover:underline">跳转QQ登录</a>
+            <BaseButton
+              v-if="qrData?.url"
+              variant="text"
+              size="sm"
+              class="text-blue-600 md:hidden"
+              @click="openQRCodeLoginUrl"
+            >
+              跳转QQ登录
+            </BaseButton>
           </div>
         </div>
 

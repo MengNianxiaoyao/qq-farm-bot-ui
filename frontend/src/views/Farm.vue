@@ -64,8 +64,12 @@ async function executeOperate() {
     return
   confirmVisible.value = false
   operating.value = true
-  await farmStore.operate(currentAccountId.value, confirmConfig.value.opType)
-  operating.value = false
+  try {
+    await farmStore.operate(currentAccountId.value, confirmConfig.value.opType)
+  }
+  finally {
+    operating.value = false
+  }
 }
 
 function handleOperate(opType: string) {
@@ -116,6 +120,13 @@ onMounted(() => {
 onUnmounted(() => {
   pause()
 })
+function getSafeImageUrl(url: string) {
+  if (!url)
+    return ''
+  if (url.startsWith('http://'))
+    return url.replace('http://', 'https://')
+  return url
+}
 </script>
 
 <template>
@@ -222,7 +233,7 @@ onUnmounted(() => {
             <div class="mb-1 mt-4 h-10 w-10 flex items-center justify-center">
               <img
                 v-if="land.seedImage"
-                :src="land.seedImage"
+                :src="getSafeImageUrl(land.seedImage)"
                 class="max-h-full max-w-full object-contain"
                 loading="lazy"
                 referrerpolicy="no-referrer"

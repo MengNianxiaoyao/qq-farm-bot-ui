@@ -18,9 +18,9 @@ import Sidebar from '@/components/Sidebar.vue'
       <!-- Main Content Area -->
       <div class="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-6">
         <div class="mx-auto max-w-7xl">
-          <RouterView v-slot="{ Component }">
-            <Transition name="fade" mode="out-in">
-              <component :is="Component" />
+          <RouterView v-slot="{ Component, route }">
+            <Transition name="slide-fade" mode="out-in">
+              <component :is="Component" :key="route.path" />
             </Transition>
           </RouterView>
         </div>
@@ -30,14 +30,20 @@ import Sidebar from '@/components/Sidebar.vue'
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+/* Slide Fade Transition */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.2s ease-out;
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.slide-fade-enter-from {
   opacity: 0;
+  transform: translateY(10px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .custom-scrollbar::-webkit-scrollbar {

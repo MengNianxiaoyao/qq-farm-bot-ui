@@ -35,3 +35,13 @@ html, body {
   padding: 0;
   overflow: hidden; /* App handles scrolling */
 }
+
+/* NProgress Customization */
+#nprogress .bar {
+  background: #10b981 !important; /* emerald-500 */
+  height: 3px !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #10b981, 0 0 5px #10b981 !important;
+}

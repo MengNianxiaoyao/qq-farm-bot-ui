@@ -2,6 +2,7 @@
 import { useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useAccountStore } from '@/stores/account'
 import { useFarmStore } from '@/stores/farm'
 import { useStatusStore } from '@/stores/status'
@@ -14,6 +15,12 @@ const { currentAccountId } = storeToRefs(accountStore)
 const { status, loading: statusLoading } = storeToRefs(statusStore)
 
 const operating = ref(false)
+const confirmVisible = ref(false)
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  opType: '',
+})
 
 function getLandTypeName(level: number) {
   const map: Record<number, string> = {
@@ -52,12 +59,33 @@ function formatTime(sec: number) {
   return `${h > 0 ? `${h}:` : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-async function handleOperate(opType: string) {
+async function executeOperate() {
+  if (!currentAccountId.value || !confirmConfig.value.opType)
+    return
+  confirmVisible.value = false
+  operating.value = true
+  await farmStore.operate(currentAccountId.value, confirmConfig.value.opType)
+  operating.value = false
+}
+
+function handleOperate(opType: string) {
   if (!currentAccountId.value)
     return
-  operating.value = true
-  await farmStore.operate(currentAccountId.value, opType)
-  operating.value = false
+
+  const confirmMap: Record<string, string> = {
+    harvest: '确定要收获所有成熟作物吗？',
+    clear: '确定要一键除草/除虫吗？',
+    plant: '确定要一键种植吗？(根据策略配置)',
+    upgrade: '确定要升级所有可升级的土地吗？(消耗金币)',
+    all: '确定要一键全收吗？(包含收获、除草、种植等)',
+  }
+
+  confirmConfig.value = {
+    title: '确认操作',
+    message: confirmMap[opType] || '确定执行此操作吗？',
+    opType,
+  }
+  confirmVisible.value = true
 }
 
 function refresh() {
@@ -229,5 +257,13 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <ConfirmModal
+      :show="confirmVisible"
+      :title="confirmConfig.title"
+      :message="confirmConfig.message"
+      @confirm="executeOperate"
+      @cancel="confirmVisible = false"
+    />
   </div>
 </template>

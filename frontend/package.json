@@ -1,0 +1,30 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.25"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^7.4.3",
+    "@iconify-json/carbon": "^1.2.18",
+    "@iconify-json/svg-spinners": "^1.2.4",
+    "@types/node": "^24.10.1",
+    "@unocss/eslint-plugin": "^66.6.0",
+    "@unocss/reset": "^66.6.0",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^10.0.1",
+    "sass": "^1.97.3",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.1.5"
+  }
+}

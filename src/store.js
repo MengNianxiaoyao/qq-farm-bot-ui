@@ -472,13 +472,19 @@ function addOrUpdateAccount(acc) {
     if (acc.id) {
         const idx = data.accounts.findIndex(a => a.id === acc.id);
         if (idx >= 0) {
-            data.accounts[idx] = { ...data.accounts[idx], ...acc, updatedAt: Date.now() };
+            data.accounts[idx] = { 
+                ...data.accounts[idx], 
+                ...acc, 
+                nick: acc.nick !== undefined ? acc.nick : data.accounts[idx].nick,
+                updatedAt: Date.now() 
+            };
         }
     } else {
         const id = data.nextId++;
         data.accounts.push({
             id: String(id),
             name: acc.name || `账号${id}`,
+            nick: acc.nick || '',
             code: acc.code || '',
             platform: acc.platform || 'qq',
             uin: acc.uin ? String(acc.uin) : '',

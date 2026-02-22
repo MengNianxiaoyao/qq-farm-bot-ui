@@ -14,7 +14,7 @@ const { processInviteCodes } = require('./invite');
 const { setLogHook, log, toNum } = require('./utils');
 const { setRecordGoldExpHook } = require('./status');
 const { getLevelExpProgress } = require('./gameConfig');
-const { getAutomation, getPreferredSeed, getConfigSnapshot, applyConfigSnapshot } = require('./store');
+const { getAutomation, getPreferredSeed, getConfigSnapshot, applyConfigSnapshot, addOrUpdateAccount } = require('./store');
 
 // 捕获日志发送给主进程
 setLogHook((tag, msg, isWarn, meta) => {
@@ -279,6 +279,19 @@ async function startBot(config) {
     const onLoginSuccess = async () => {
         loginReady = true;
         const state = getUserState();
+
+        // 自动同步昵称到账号配置
+        const accountId = process.env.FARM_ACCOUNT_ID;
+        if (accountId && state.name && state.name !== '未知' && state.name !== '未登录') {
+            try {
+                const cleanName = String(state.name).trim();
+                if (cleanName) {
+                    addOrUpdateAccount({ id: accountId, name: cleanName });
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
 
         if (onSellGain) {
             networkEvents.off('sell', onSellGain);

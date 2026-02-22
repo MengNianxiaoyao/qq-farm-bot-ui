@@ -162,7 +162,7 @@ function getStats(statusData, userState, connected, limits) {
     return {
         connection: { connected },
         status: {
-            name: userObj.name,
+            name: userObj.name || statusObj.name,
             level: statusObj.level || userObj.level || 0,
             gold: currentGold,
             coupon: Number.isFinite(Number(userObj.coupon)) ? Number(userObj.coupon) : 0,

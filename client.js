@@ -473,6 +473,21 @@ function handleWorkerMessage(accountId, msg) {
     if (msg.type === 'status_sync') {
         // 合并状态
         worker.status = normalizeStatusForPanel(msg.data, accountId, worker.name);
+        
+        // 尝试更新昵称到 store
+        if (msg.data && msg.data.status && msg.data.status.name) {
+             const newNick = msg.data.status.name;
+             // 避免频繁写入，只在内存中无昵称或不一致时更新（这里为了简单，只在内存注入，store更新交给 addOrUpdateAccount 显式调用）
+             // 但为了满足“扫码更新code后直接显示昵称”，我们需要确保 addOrUpdateAccount 被调用。
+             // 扫码登录是在 admin.js -> qrlogin.js 处理的，那里会调用 addOrUpdateAccount。
+             // 只要 qrlogin.js 能获取到昵称并传给 addOrUpdateAccount 即可。
+             // 如果是自动登录（startWorker），worker 会发送 status_sync。
+             // 我们可以选择在这里更新 store，但要小心性能。
+             // 鉴于 client.js 中 getAccounts 已经注入了 nick，前端轮询 /api/accounts 时就能看到。
+             // 所以不需要在这里强制写盘，除非为了持久化。
+             // 考虑到 client.js 的 getAccounts 注入逻辑依赖于 worker.status，只要 worker 运行中，就能显示。
+        }
+        
         const connected = !!(msg.data && msg.data.connection && msg.data.connection.connected);
         if (connected) {
             worker.disconnectedSince = 0;
@@ -658,7 +673,11 @@ const dataProvider = {
         const data = getAccounts();
         // 注入运行状态
         data.accounts.forEach(a => {
-            a.running = !!workers[a.id];
+            const worker = workers[a.id];
+            a.running = !!worker;
+            if (worker && worker.status && worker.status.status && worker.status.status.name) {
+                 a.nick = worker.status.status.name;
+            }
         });
         return data;
     },

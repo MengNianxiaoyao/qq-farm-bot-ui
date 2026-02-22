@@ -2,7 +2,7 @@
  * 数据分析模块 - 作物效率分析
  */
 
-const { getAllPlants, getFruitPrice, getSeedPrice } = require('./gameConfig');
+const { getAllPlants, getFruitPrice, getSeedPrice, getItemImageById } = require('./gameConfig');
 
 function parseGrowTime(growPhases) {
     if (!growPhases) return 0;
@@ -36,12 +36,16 @@ function formatTime(seconds) {
 
 function getPlantRankings(sortBy = 'exp') {
     const plants = getAllPlants();
+    console.log(`[Analytics] getAllPlants returned ${plants.length} items`);
     
     // 筛选普通作物
     const normalPlants = plants.filter(p => {
-        const idStr = String(p.id);
-        return idStr.startsWith('102') && p.seed_id && p.seed_id >= 20000 && p.seed_id < 30000;
+        // const idStr = String(p.id);
+        // return idStr.startsWith('102') && p.seed_id && p.seed_id >= 20000 && p.seed_id < 30000;
+        // 放宽条件，只要有种子ID且有生长阶段数据
+        return p.seed_id > 0 && p.grow_phases;
     });
+    console.log(`[Analytics] Found ${normalPlants.length} plants after filter`);
 
     const results = [];
     for (const plant of normalPlants) {
@@ -96,6 +100,7 @@ function getPlantRankings(sortBy = 'exp') {
             fruitCount,
             fruitPrice,
             seedPrice,
+            image: getItemImageById(plant.seed_id),
         });
     }
 

@@ -29,6 +29,7 @@
   "pkg": {
     "assets": [
       "panel/**/*",
+      "frontend/dist/**/*",
       "gameConfig/**/*",
       "proto/**/*",
       "share.txt"

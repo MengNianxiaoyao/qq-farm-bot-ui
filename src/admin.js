@@ -52,8 +52,8 @@ function startAdminServer(dataProvider) {
     if (fs.existsSync(frontendDist)) {
         app.use(express.static(frontendDist));
     } else {
-        const panelDir = getResourcePath('panel');
-        app.use(express.static(panelDir));
+        console.warn('Frontend build not found at:', frontendDist);
+        app.get('/', (req, res) => res.send('Frontend build not found. Please build the frontend project.'));
     }
     app.use('/game-config', express.static(getResourcePath('gameConfig')));
 
@@ -469,8 +469,7 @@ function startAdminServer(dataProvider) {
         if (fs.existsSync(frontendDist)) {
             res.sendFile(path.join(frontendDist, 'index.html'));
         } else {
-            const panelDir = getResourcePath('panel');
-            res.sendFile(path.join(panelDir, 'index.html'));
+            res.status(404).send('Frontend build not found. Please build the frontend project.');
         }
     });
 

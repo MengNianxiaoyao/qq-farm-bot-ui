@@ -9,10 +9,12 @@
   "bin": "client.js",
   "scripts": {
     "start": "node client.js",
-    "build:release": "pkg . --no-bytecode --targets node18-win-x64,node18-linux-x64,node18-macos-x64,node18-macos-arm64 --out-path dist",
-    "build:win": "pkg . --no-bytecode --targets node18-win-x64 --out-path dist",
-    "build:linux": "pkg . --no-bytecode --targets node18-linux-x64 --out-path dist",
-    "build:mac": "pkg . --no-bytecode --targets node18-macos-x64,node18-macos-arm64 --out-path dist",
+    "frontend:install": "cd frontend && pnpm install",
+    "frontend:build": "cd frontend && pnpm build",
+    "build:release": "npm run frontend:build && pkg . --no-bytecode --targets node18-win-x64,node18-linux-x64,node18-macos-x64,node18-macos-arm64 --out-path dist",
+    "build:win": "npm run frontend:build && pkg . --no-bytecode --targets node18-win-x64 --out-path dist",
+    "build:linux": "npm run frontend:build && pkg . --no-bytecode --targets node18-linux-x64 --out-path dist",
+    "build:mac": "npm run frontend:build && pkg . --no-bytecode --targets node18-macos-x64,node18-macos-arm64 --out-path dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -28,7 +30,6 @@
   },
   "pkg": {
     "assets": [
-      "panel/**/*",
       "frontend/dist/**/*",
       "gameConfig/**/*",
       "proto/**/*",

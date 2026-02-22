@@ -54,6 +54,9 @@ npm -v
 ```powershell
 cd D:\Projects\qq-farm-bot-ui
 npm install
+# 安装前端依赖并构建
+npm run frontend:install
+npm run frontend:build
 ```
 
 3. 启动项目
@@ -87,6 +90,9 @@ npm -v
 ```bash
 cd /path/to/qq-farm-bot-ui
 npm install
+# 安装前端依赖并构建
+npm run frontend:install
+npm run frontend:build
 ```
 
 3. 启动项目

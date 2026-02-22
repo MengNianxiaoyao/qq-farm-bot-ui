@@ -7,6 +7,9 @@ export default defineConfig({
     presetIcons({
       scale: 1.2,
       warn: true,
+      collections: {
+        fas: () => import('@iconify-json/fa-solid/icons.json').then(i => i.default),
+      },
     }),
     presetWebFonts({
       fonts: {

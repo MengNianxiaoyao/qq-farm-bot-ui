@@ -245,6 +245,9 @@ async function handleSaveOffline() {
           <h3 class="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
             <div class="i-fas-cogs" />
             策略设置
+            <span v-if="currentAccountName" class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+              ({{ currentAccountName }})
+            </span>
           </h3>
         </div>
 

@@ -99,8 +99,8 @@ const timeToLevel = computed(() => {
   const minsToLevel = expNeeded / (ratePerHour / 60)
 
   if (minsToLevel < 60)
-    return `约 ${Math.ceil(minsToLevel)} 分钟升级`
-  return `约 ${(minsToLevel / 60).toFixed(1)} 小时升级`
+    return `约 ${Math.ceil(minsToLevel)} 分钟后升级`
+  return `约 ${(minsToLevel / 60).toFixed(1)} 小时后升级`
 })
 
 // Fertilizer & Collection
@@ -292,7 +292,8 @@ onUnmounted(() => {
       <!-- Account & Exp -->
       <div class="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
         <div class="mb-2 flex items-start justify-between">
-          <div class="text-sm text-gray-500">
+          <div class="flex items-center gap-1.5 text-sm text-gray-500">
+            <div class="i-fas-user-circle" />
             账号
           </div>
           <div class="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
@@ -306,7 +307,10 @@ onUnmounted(() => {
         <!-- Level Progress -->
         <div class="mt-3">
           <div class="mb-1 flex justify-between text-xs text-gray-500">
-            <span>EXP</span>
+            <div class="flex items-center gap-1">
+              <div class="i-fas-bolt text-blue-400" />
+              <span>EXP</span>
+            </div>
             <span>{{ status?.levelProgress?.current || 0 }} / {{ status?.levelProgress?.needed || '?' }}</span>
           </div>
           <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
@@ -326,7 +330,8 @@ onUnmounted(() => {
       <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
         <div class="flex justify-between">
           <div>
-            <div class="text-xs text-gray-500">
+            <div class="flex items-center gap-1.5 text-xs text-gray-500">
+              <div class="i-fas-coins text-yellow-500" />
               金币
             </div>
             <div class="text-lg text-yellow-600 font-bold dark:text-yellow-500">
@@ -337,10 +342,11 @@ onUnmounted(() => {
             </div>
           </div>
           <div class="text-right">
-            <div class="text-xs text-gray-500">
+            <div class="flex items-center justify-end gap-1.5 text-xs text-gray-500">
+              <div class="i-fas-ticket-alt text-emerald-400" />
               点券
             </div>
-            <div class="text-lg text-blue-600 font-bold dark:text-blue-500">
+            <div class="text-lg text-emerald-500 font-bold dark:text-emerald-400">
               {{ status?.status?.coupon || 0 }}
             </div>
             <div v-if="status?.sessionCouponGained > 0" class="text-[10px] text-green-500">
@@ -354,7 +360,8 @@ onUnmounted(() => {
               <div class="h-2.5 w-2.5 rounded-full" :class="status?.connection?.connected ? 'bg-green-500' : 'bg-red-500'" />
               <span class="text-xs font-bold">{{ status?.connection?.connected ? '在线' : '离线' }}</span>
             </div>
-            <div class="text-xs text-gray-400">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400">
+              <div class="i-fas-clock text-purple-400" />
               {{ formatDuration(localUptime) }}
             </div>
           </div>
@@ -363,12 +370,14 @@ onUnmounted(() => {
 
       <!-- Items (Fertilizer & Collection) -->
       <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
-        <div class="mb-2 text-sm text-gray-500">
+        <div class="mb-2 flex items-center gap-1.5 text-sm text-gray-500">
+          <div class="i-fas-flask text-emerald-400" />
           化肥容器
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <div class="text-xs text-gray-400">
+            <div class="flex items-center gap-1 text-xs text-gray-400">
+              <div class="i-fas-flask text-emerald-400" />
               普通
             </div>
             <div class="font-bold">
@@ -376,7 +385,8 @@ onUnmounted(() => {
             </div>
           </div>
           <div>
-            <div class="text-xs text-gray-400">
+            <div class="flex items-center gap-1 text-xs text-gray-400">
+              <div class="i-fas-vial text-emerald-400" />
               有机
             </div>
             <div class="font-bold">
@@ -385,12 +395,14 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="my-2 border-t border-gray-100 dark:border-gray-700" />
-        <div class="mb-1 text-sm text-gray-500">
+        <div class="mb-1 flex items-center gap-1.5 text-sm text-gray-500">
+          <div class="i-fas-star text-emerald-400" />
           收藏点
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <div class="text-xs text-gray-400">
+            <div class="flex items-center gap-1 text-xs text-gray-400">
+              <div class="i-fas-bookmark text-emerald-400" />
               普通
             </div>
             <div class="font-bold">
@@ -398,7 +410,8 @@ onUnmounted(() => {
             </div>
           </div>
           <div>
-            <div class="text-xs text-gray-400">
+            <div class="flex items-center gap-1 text-xs text-gray-400">
+              <div class="i-fas-gem text-emerald-400" />
               典藏
             </div>
             <div class="font-bold">
@@ -434,15 +447,14 @@ onUnmounted(() => {
               @change="refresh"
             />
 
-            <div class="flex items-center">
-              <BaseInput
-                v-model="filter.keyword"
-                placeholder="关键词..."
-                class="w-32"
-                @keyup.enter="refresh"
-              />
-              <div v-if="filter.keyword" class="ml-2 i-carbon-close cursor-pointer text-gray-400 hover:text-gray-600" @click="filter.keyword = ''; refresh()" />
-            </div>
+            <BaseInput
+              v-model="filter.keyword"
+              placeholder="关键词..."
+              class="w-32"
+              clearable
+              @keyup.enter="refresh"
+              @clear="refresh"
+            />
 
             <BaseCheckbox
               v-model="filter.isWarn"

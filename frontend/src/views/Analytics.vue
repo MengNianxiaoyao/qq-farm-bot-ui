@@ -10,6 +10,7 @@ const { currentAccountId } = storeToRefs(accountStore)
 const loading = ref(false)
 const list = ref<any[]>([])
 const sortKey = ref('exp')
+const imageErrors = ref<Record<string | number, boolean>>({})
 
 const sortOptions = [
   { value: 'exp', label: '经验/小时' },
@@ -80,6 +81,22 @@ function formatLv(level: any) {
     return '未知'
   return String(level)
 }
+
+function formatGrowTime(seconds: any) {
+  const s = Number(seconds)
+  if (!Number.isFinite(s) || s <= 0)
+    return '0秒'
+  if (s < 60)
+    return `${s}秒`
+  if (s < 3600) {
+    const mins = Math.floor(s / 60)
+    const secs = s % 60
+    return secs > 0 ? `${mins}分${secs}秒` : `${mins}分`
+  }
+  const hours = Math.floor(s / 3600)
+  const mins = Math.floor((s % 3600) / 60)
+  return mins > 0 ? `${hours}时${mins}分` : `${hours}时`
+}
 </script>
 
 <template>
@@ -146,11 +163,11 @@ function formatLv(level: any) {
                 <div class="flex items-center gap-3">
                   <div class="relative h-10 w-10 flex shrink-0 items-center justify-center overflow-hidden border border-gray-200 rounded-lg bg-gray-100 dark:border-gray-600 dark:bg-gray-700">
                     <img
-                      v-if="item.image"
+                      v-if="item.image && !imageErrors[item.seedId]"
                       :src="item.image"
                       class="h-8 w-8 object-contain"
                       loading="lazy"
-                      @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
+                      @error="imageErrors[item.seedId] = true"
                     >
                     <div v-else class="i-carbon-sprout text-xl text-gray-400" />
                   </div>
@@ -167,7 +184,7 @@ function formatLv(level: any) {
               </td>
               <td class="px-4 py-2 text-gray-600 dark:text-gray-300">
                 <div class="font-medium">
-                  {{ item.growTimeStr }}
+                  {{ formatGrowTime(item.growTime) }}
                 </div>
                 <div class="text-xs text-gray-400">
                   {{ item.seasons }}季

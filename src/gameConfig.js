@@ -281,17 +281,33 @@ function getItemImageById(itemId) {
     const id = Number(itemId) || 0;
     if (id <= 0) return '';
 
-    // 优先按物品ID命中（如 20003_胡萝卜_Crop_3_Seed.png）
-    const direct = seedImageMap.get(id);
-    if (direct) return direct;
+    // 内部函数：根据 ID 获取图片
+    const getImg = (targetId) => {
+        // 1. 优先按物品ID命中（如 20003_胡萝卜_Crop_3_Seed.png）
+        const direct = seedImageMap.get(targetId);
+        if (direct) return direct;
 
-    // 其次按 ItemInfo.asset_name 命中（如 Crop_3_Seed.png）
-    const item = itemInfoMap.get(id);
-    const assetName = item && item.asset_name ? String(item.asset_name) : '';
-    if (assetName) {
-        const byAsset = seedAssetImageMap.get(assetName);
-        if (byAsset) return byAsset;
+        // 2. 其次按 ItemInfo.asset_name 命中（如 Crop_3_Seed.png）
+        const item = itemInfoMap.get(targetId);
+        const assetName = item && item.asset_name ? String(item.asset_name) : '';
+        if (assetName) {
+            const byAsset = seedAssetImageMap.get(assetName);
+            if (byAsset) return byAsset;
+        }
+        return '';
+    };
+
+    // 1. 尝试直接获取
+    let img = getImg(id);
+    if (img) return img;
+
+    // 2. 如果是果实，尝试获取对应的种子图片
+    const plant = getPlantByFruitId(id);
+    if (plant && plant.seed_id) {
+        img = getImg(plant.seed_id);
+        if (img) return img;
     }
+
     return '';
 }
 

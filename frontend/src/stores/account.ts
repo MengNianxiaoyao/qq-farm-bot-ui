@@ -5,7 +5,7 @@ import api from '@/api'
 export interface Account {
   id: string
   name: string
-  nick?: string
+  // nick?: string // Removed as requested
   uin?: number
   running?: boolean
   // Add other fields as discovered

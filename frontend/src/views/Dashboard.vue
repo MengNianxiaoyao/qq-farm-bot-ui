@@ -1,15 +1,171 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useAccountStore } from '@/stores/account'
+import { useBagStore } from '@/stores/bag'
 import { useStatusStore } from '@/stores/status'
 
 const statusStore = useStatusStore()
 const accountStore = useAccountStore()
+const bagStore = useBagStore()
 const { status, logs, error } = storeToRefs(statusStore)
 const { currentAccountId } = storeToRefs(accountStore)
+const { dashboardItems } = storeToRefs(bagStore)
 const logContainer = ref<HTMLElement | null>(null)
+const autoScroll = ref(true)
+
+const filter = reactive({
+  module: '',
+  event: '',
+  keyword: '',
+  isWarn: false,
+})
+
+const modules = [
+  { label: '所有模块', value: '' },
+  { label: '农场', value: 'farm' },
+  { label: '好友', value: 'friend' },
+  { label: '仓库', value: 'warehouse' },
+  { label: '任务', value: 'task' },
+  { label: '系统', value: 'sys' },
+]
+
+const events = [
+  { label: '所有事件', value: '' },
+  { label: '收获', value: 'harvest' },
+  { label: '偷菜', value: 'steal' },
+  { label: '浇水', value: 'water' },
+  { label: '除草', value: 'weed' },
+  { label: '除虫', value: 'bug' },
+  { label: '施肥', value: 'fertilize' },
+  { label: '种植', value: 'plant' },
+  { label: '帮浇', value: 'helpWater' },
+  { label: '帮草', value: 'helpWeed' },
+  { label: '帮虫', value: 'helpBug' },
+  { label: '任务', value: 'taskClaim' },
+  { label: '出售', value: 'sell' },
+  { label: '升级', value: 'upgrade' },
+]
+
+const displayName = computed(() => {
+  // Check login status first
+  if (!status.value?.connection?.connected)
+    return '未登录'
+
+  // Try to use nickname from status (game server)
+  const gameName = status.value?.status?.name
+  if (gameName)
+    return gameName
+
+  // Fallback to account name (usually ID) or '未命名'
+  const account = accountStore.currentAccount
+  return account?.name || '未命名'
+})
+
+// Exp Rate & Time to Level
+const expRate = computed(() => {
+  const gain = status.value?.sessionExpGained || 0
+  const uptime = status.value?.uptime || 0
+  if (!uptime)
+    return '0/时'
+  const hours = uptime / 3600
+  const rate = hours > 0 ? (gain / hours) : 0
+  return `${Math.floor(rate)}/时`
+})
+
+const timeToLevel = computed(() => {
+  const gain = status.value?.sessionExpGained || 0
+  const uptime = status.value?.uptime || 0
+  // Note: status.value.status.level is level, progress is in expProgress or levelProgress?
+  // Existing code used status?.levelProgress.
+  // Old code used data.expProgress.
+  // Let's stick to what's in status store, assuming it maps correctly.
+  const current = status.value?.levelProgress?.current || 0
+  const needed = status.value?.levelProgress?.needed || 0
+
+  if (!needed || !uptime || gain <= 0)
+    return ''
+
+  const hours = uptime / 3600
+  const ratePerHour = hours > 0 ? (gain / hours) : 0
+  if (ratePerHour <= 0)
+    return ''
+
+  const expNeeded = needed - current
+  const minsToLevel = expNeeded / (ratePerHour / 60)
+
+  if (minsToLevel < 60)
+    return `约 ${Math.ceil(minsToLevel)} 分钟升级`
+  return `约 ${(minsToLevel / 60).toFixed(1)} 小时升级`
+})
+
+// Fertilizer & Collection
+const fertilizerNormal = computed(() => dashboardItems.value.find((i: any) => Number(i.id) === 1011))
+const fertilizerOrganic = computed(() => dashboardItems.value.find((i: any) => Number(i.id) === 1012))
+const collectionNormal = computed(() => dashboardItems.value.find((i: any) => Number(i.id) === 3001))
+const collectionRare = computed(() => dashboardItems.value.find((i: any) => Number(i.id) === 3002))
+
+function formatBucketTime(item: any) {
+  if (!item)
+    return '0.0h'
+  if (item.hoursText)
+    return item.hoursText.replace('小时', 'h')
+  const count = Number(item.count || 0)
+  return `${(count / 3600).toFixed(1)}h`
+}
+
+// Next Check Countdown
+const nextFarmCheck = ref('--')
+const nextFriendCheck = ref('--')
+let localNextFarmRemainSec = 0
+let localNextFriendRemainSec = 0
+let countdownTimer: any = null
+
+function updateCountdowns() {
+  if (localNextFarmRemainSec > 0) {
+    localNextFarmRemainSec--
+    nextFarmCheck.value = formatDuration(localNextFarmRemainSec)
+  }
+  else {
+    nextFarmCheck.value = '--'
+  }
+
+  if (localNextFriendRemainSec > 0) {
+    localNextFriendRemainSec--
+    nextFriendCheck.value = formatDuration(localNextFriendRemainSec)
+  }
+  else {
+    nextFriendCheck.value = '--'
+  }
+}
+
+watch(status, (newVal) => {
+  if (newVal?.nextChecks) {
+    // Only update local counters if they are significantly different or 0
+    // Actually, we should sync from server periodically.
+    // Here we just take server value when it comes.
+    localNextFarmRemainSec = newVal.nextChecks.farmRemainSec || 0
+    localNextFriendRemainSec = newVal.nextChecks.friendRemainSec || 0
+    updateCountdowns() // Update immediately
+  }
+}, { deep: true })
+
 let timer: any = null
+
+function formatDuration(seconds: number) {
+  if (seconds <= 0)
+    return '00:00:00'
+  const d = Math.floor(seconds / 86400)
+  const h = Math.floor((seconds % 86400) / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
+
+  const pad = (n: number) => n.toString().padStart(2, '0')
+
+  if (d > 0)
+    return `${d}天 ${pad(h)}:${pad(m)}:${pad(s)}`
+  return `${pad(h)}:${pad(m)}:${pad(s)}`
+}
 
 function getLogTagClass(tag: string) {
   if (tag === '错误')
@@ -63,7 +219,13 @@ function getExpPercent(p: any) {
 function refresh() {
   if (currentAccountId.value) {
     statusStore.fetchStatus(currentAccountId.value)
-    statusStore.fetchLogs(currentAccountId.value)
+    statusStore.fetchLogs(currentAccountId.value, {
+      module: filter.module || undefined,
+      event: filter.event || undefined,
+      keyword: filter.keyword || undefined,
+      isWarn: filter.isWarn ? 'true' : undefined,
+    })
+    bagStore.fetchBag(currentAccountId.value)
   }
 }
 
@@ -71,10 +233,18 @@ watch(currentAccountId, () => {
   refresh()
 })
 
+function onLogScroll(e: Event) {
+  const el = e.target as HTMLElement
+  if (!el)
+    return
+  const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50
+  autoScroll.value = isNearBottom
+}
+
 // Auto scroll logs
 watch(logs, () => {
   nextTick(() => {
-    if (logContainer.value) {
+    if (logContainer.value && autoScroll.value) {
       logContainer.value.scrollTop = logContainer.value.scrollHeight
     }
   })
@@ -84,11 +254,15 @@ onMounted(() => {
   refresh()
   // Auto refresh every 5s
   timer = setInterval(refresh, 5000)
+  // Countdown timer (every 1s)
+  countdownTimer = setInterval(updateCountdowns, 1000)
 })
 
 onUnmounted(() => {
   if (timer)
     clearInterval(timer)
+  if (countdownTimer)
+    clearInterval(countdownTimer)
 })
 </script>
 
@@ -101,8 +275,8 @@ onUnmounted(() => {
     </div>
 
     <!-- Status Cards -->
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-4 md:grid-cols-2">
-      <!-- 昵称 & 等级 -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 md:grid-cols-2">
+      <!-- Account & Exp -->
       <div class="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
         <div class="mb-2 flex items-start justify-between">
           <div class="text-sm text-gray-500">
@@ -112,11 +286,8 @@ onUnmounted(() => {
             Lv.{{ status?.status?.level || 0 }}
           </div>
         </div>
-        <div class="mb-1 truncate text-xl font-bold" :title="status?.status?.nick || status?.status?.name">
-          {{ status?.status?.nick || status?.status?.name || '未命名' }}
-        </div>
-        <div class="text-xs text-gray-400">
-          运行时长: {{ status?.uptime || '0:00' }}
+        <div class="mb-1 truncate text-xl font-bold" :title="displayName">
+          {{ displayName }}
         </div>
 
         <!-- Level Progress -->
@@ -131,84 +302,197 @@ onUnmounted(() => {
               :style="{ width: `${getExpPercent(status?.levelProgress)}%` }"
             />
           </div>
-        </div>
-      </div>
-
-      <!-- 金币 -->
-      <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
-        <div class="text-sm text-gray-500">
-          金币
-        </div>
-        <div class="text-2xl text-yellow-600 font-bold dark:text-yellow-500">
-          {{ status?.status?.gold || 0 }}
-        </div>
-        <div class="mt-1 text-xs text-gray-400">
-          本次收益: <span class="text-green-500">+{{ status?.sessionGoldGained || 0 }}</span>
-        </div>
-      </div>
-
-      <!-- 点券 -->
-      <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
-        <div class="text-sm text-gray-500">
-          点券
-        </div>
-        <div class="text-2xl text-blue-600 font-bold dark:text-blue-500">
-          {{ status?.status?.coupon || 0 }}
-        </div>
-        <div class="mt-1 text-xs text-gray-400">
-          本次收益: <span class="text-green-500">+{{ status?.sessionCouponGained || 0 }}</span>
-        </div>
-      </div>
-
-      <!-- 状态 -->
-      <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
-        <div class="text-sm text-gray-500">
-          状态
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="h-3 w-3 rounded-full" :class="status?.connection?.connected ? 'bg-green-500' : 'bg-red-500'" />
-          <div class="font-bold">
-            {{ status?.connection?.connected ? '在线' : '离线' }}
+          <div class="mt-2 flex justify-between text-xs text-gray-400">
+            <span>效率: {{ expRate }}</span>
+            <span>{{ timeToLevel }}</span>
           </div>
         </div>
-        <div class="mt-1 truncate text-xs text-gray-400">
-          {{ status?.lastOperation || '暂无操作' }}
+      </div>
+
+      <!-- Assets & Status -->
+      <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+        <div class="flex justify-between">
+          <div>
+            <div class="text-xs text-gray-500">
+              金币
+            </div>
+            <div class="text-lg text-yellow-600 font-bold dark:text-yellow-500">
+              {{ status?.status?.gold || 0 }}
+            </div>
+            <div v-if="status?.sessionGoldGained > 0" class="text-[10px] text-green-500">
+              +{{ status?.sessionGoldGained }}
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-500">
+              点券
+            </div>
+            <div class="text-lg text-blue-600 font-bold dark:text-blue-500">
+              {{ status?.status?.coupon || 0 }}
+            </div>
+            <div v-if="status?.sessionCouponGained > 0" class="text-[10px] text-green-500">
+              +{{ status?.sessionCouponGained }}
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="h-2.5 w-2.5 rounded-full" :class="status?.connection?.connected ? 'bg-green-500' : 'bg-red-500'" />
+              <span class="text-xs font-bold">{{ status?.connection?.connected ? '在线' : '离线' }}</span>
+            </div>
+            <div class="text-xs text-gray-400">
+              运行: {{ formatDuration(status?.uptime) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items (Fertilizer & Collection) -->
+      <div class="flex flex-col justify-between rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+        <div class="mb-2 text-sm text-gray-500">
+          化肥容器
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <div class="text-xs text-gray-400">
+              普通
+            </div>
+            <div class="font-bold">
+              {{ formatBucketTime(fertilizerNormal) }}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-400">
+              有机
+            </div>
+            <div class="font-bold">
+              {{ formatBucketTime(fertilizerOrganic) }}
+            </div>
+          </div>
+        </div>
+        <div class="my-2 border-t border-gray-100 dark:border-gray-700" />
+        <div class="mb-1 text-sm text-gray-500">
+          收藏点
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <div class="text-xs text-gray-400">
+              普通
+            </div>
+            <div class="font-bold">
+              {{ collectionNormal?.count || 0 }}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-400">
+              典藏
+            </div>
+            <div class="font-bold">
+              {{ collectionRare?.count || 0 }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Operations Grid -->
-    <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h3 class="mb-4 flex items-center gap-2 text-lg font-medium">
-        <div class="i-carbon-activity" />
-        <span>今日统计</span>
-      </h3>
-      <div class="grid grid-cols-2 gap-4 lg:grid-cols-8 md:grid-cols-6 sm:grid-cols-4">
-        <div v-for="(val, key) in (status?.operations || {})" :key="key" class="rounded bg-gray-50 p-3 text-center dark:bg-gray-700/30">
-          <div class="mb-1 text-xs text-gray-500">
-            {{ getOpName(key) }}
+    <!-- Main Content Flex -->
+    <div class="flex flex-col gap-6 lg:flex-row items-stretch">
+      <!-- Logs (Left Column) -->
+      <div class="flex flex-col rounded-lg bg-white p-6 shadow lg:w-3/4 dark:bg-gray-800">
+        <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 class="flex items-center gap-2 text-lg font-medium">
+            <div class="i-carbon-document" />
+            <span>运行日志</span>
+          </h3>
+
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <select v-model="filter.module" class="border border-gray-200 rounded bg-gray-50 px-2 py-1 outline-none dark:border-gray-600 focus:border-blue-500 dark:bg-gray-700 focus:ring-1 focus:ring-blue-500" @change="refresh">
+              <option v-for="opt in modules" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+
+            <select v-model="filter.event" class="border border-gray-200 rounded bg-gray-50 px-2 py-1 outline-none dark:border-gray-600 focus:border-blue-500 dark:bg-gray-700 focus:ring-1 focus:ring-blue-500" @change="refresh">
+              <option v-for="opt in events" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+
+            <div class="flex items-center border border-gray-200 rounded bg-gray-50 px-2 py-1 dark:border-gray-600 dark:bg-gray-700">
+              <input v-model="filter.keyword" placeholder="关键词..." class="w-24 bg-transparent text-sm outline-none sm:w-32" @keyup.enter="refresh">
+              <div v-if="filter.keyword" class="i-carbon-close cursor-pointer text-gray-400 hover:text-gray-600" @click="filter.keyword = ''; refresh()" />
+            </div>
+
+            <label class="flex cursor-pointer select-none items-center gap-1 border border-gray-200 rounded bg-gray-50 px-2 py-1 dark:border-gray-600 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
+              <input v-model="filter.isWarn" type="checkbox" class="accent-blue-500" @change="refresh">
+              <span>只看异常</span>
+            </label>
+
+            <button class="flex items-center gap-1 rounded bg-blue-500 px-3 py-1 text-white transition-colors hover:bg-blue-600" @click="refresh">
+              <div class="i-carbon-search" />
+            </button>
           </div>
-          <div class="text-lg font-bold">
-            {{ val }}
+        </div>
+
+        <div ref="logContainer" class="min-h-[300px] flex-1 overflow-y-auto rounded bg-gray-50 p-4 text-sm leading-relaxed font-mono dark:bg-gray-900" @scroll="onLogScroll">
+          <div v-if="!logs.length" class="py-8 text-center text-gray-400">
+            暂无日志
+          </div>
+          <div v-for="log in logs" :key="log.ts" class="mb-1 break-all">
+            <span class="mr-2 select-none text-gray-400">[{{ formatLogTime(log.time) }}]</span>
+            <span class="mr-2 rounded px-1.5 py-0.5 text-xs font-bold" :class="getLogTagClass(log.tag)">{{ log.tag }}</span>
+            <span :class="getLogMsgClass(log.tag)">{{ log.msg }}</span>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Logs -->
-    <div class="h-[400px] flex flex-col rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h3 class="mb-4 flex items-center gap-2 text-lg font-medium">
-        <div class="i-carbon-document" />
-        <span>运行日志</span>
-      </h3>
-      <div ref="logContainer" class="flex-1 overflow-y-auto rounded bg-gray-50 p-4 text-sm leading-relaxed font-mono dark:bg-gray-900">
-        <div v-if="!logs.length" class="py-8 text-center text-gray-400">
-          暂无日志
+      <!-- Right Column Stack -->
+      <div class="flex flex-col gap-6 lg:w-1/4">
+        <!-- Next Checks -->
+        <div class="flex flex-col rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+          <h3 class="mb-4 flex items-center gap-2 text-lg font-medium">
+            <div class="i-carbon-hourglass" />
+            <span>下次巡查倒计时</span>
+          </h3>
+          <div class="flex flex-col justify-center gap-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <div class="i-carbon-sprout text-lg text-green-500" />
+                <span>农场</span>
+              </div>
+              <div class="text-lg font-bold font-mono">
+                {{ nextFarmCheck }}
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <div class="i-carbon-collaborate text-lg text-blue-500" />
+                <span>好友</span>
+              </div>
+              <div class="text-lg font-bold font-mono">
+                {{ nextFriendCheck }}
+              </div>
+            </div>
+          </div>
         </div>
-        <div v-for="log in logs" :key="log.ts" class="mb-1 break-all">
-          <span class="mr-2 select-none text-gray-400">[{{ formatLogTime(log.time) }}]</span>
-          <span class="mr-2 rounded px-1.5 py-0.5 text-xs font-bold" :class="getLogTagClass(log.tag)">{{ log.tag }}</span>
-          <span :class="getLogMsgClass(log.tag)">{{ log.msg }}</span>
+
+        <!-- Operations Grid -->
+        <div class="flex-1 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+          <h3 class="mb-3 flex items-center gap-2 text-lg font-medium">
+            <div class="i-carbon-chart-column" />
+            <span>今日统计</span>
+          </h3>
+          <div class="grid grid-cols-3 gap-2">
+            <div v-for="(val, key) in (status?.operations || {})" :key="key" class="rounded bg-gray-50 p-2 text-center dark:bg-gray-700/30">
+              <div class="mb-1 text-[10px] text-gray-500">
+                {{ getOpName(key) }}
+              </div>
+              <div class="text-sm font-bold">
+                {{ val }}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -70,12 +70,13 @@ function startQRCheck() {
           stopQRCheck()
           qrStatus.value = '登录成功!'
           // Auto fill form and submit
-          const { uin, code: authCode } = res.data.data
+          const { uin, code: authCode, nickname } = res.data.data
 
           // Use name from form if provided, otherwise default
           let accName = form.name.trim()
           if (!accName) {
-            accName = uin ? String(uin) : '扫码账号'
+            // 优先使用 nickname，其次使用 uin
+            accName = nickname || (uin ? String(uin) : '扫码账号')
           }
 
           // We need to add account with this data

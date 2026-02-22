@@ -187,7 +187,8 @@ class MiniProgramLoginSession {
 
             if (+resCode === 0) {
                 if (+data.ok !== 1) return { status: 'Wait' };
-                return { status: 'OK', ticket: data.ticket, uin: data.uin };
+                // 这里的 data.nick 字段可能存在，需要确认返回结构
+                return { status: 'OK', ticket: data.ticket, uin: data.uin, nickname: data.nick || '' };
             }
 
             if (+resCode === -10003) return { status: 'Used' };

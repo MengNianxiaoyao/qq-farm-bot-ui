@@ -439,6 +439,7 @@ function startAdminServer(dataProvider) {
             if (result.status === 'OK') {
                 const ticket = result.ticket;
                 const uin = result.uin || '';
+                const nickname = result.nickname || ''; // 获取昵称
                 const appid = '1112386029'; // Farm appid
 
                 const authCode = await MiniProgramLoginSession.getAuthCode(ticket, appid);
@@ -448,7 +449,7 @@ function startAdminServer(dataProvider) {
                     avatar = `https://q1.qlogo.cn/g?b=qq&nk=${uin}&s=640`;
                 }
 
-                res.json({ ok: true, data: { status: 'OK', code: authCode, uin, avatar } });
+                res.json({ ok: true, data: { status: 'OK', code: authCode, uin, avatar, nickname } });
             } else if (result.status === 'Used') {
                 res.json({ ok: true, data: { status: 'Used' } });
             } else if (result.status === 'Wait') {

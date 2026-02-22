@@ -1,44 +1,55 @@
 <script setup lang="ts">
 import { useDateFormat, useNow } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '@/api'
 import AccountModal from '@/components/AccountModal.vue'
 
 import RemarkModal from '@/components/RemarkModal.vue'
 import { useAccountStore } from '@/stores/account'
+import { useStatusStore } from '@/stores/status'
 
 const accountStore = useAccountStore()
+const statusStore = useStatusStore()
 const { accounts, currentAccount } = storeToRefs(accountStore)
+const { status } = storeToRefs(statusStore)
 
 const showAccountDropdown = ref(false)
 const showAccountModal = ref(false)
 const showRemarkModal = ref(false)
 const accountToEdit = ref<any>(null)
-const connected = ref(true)
+const systemConnected = ref(true)
 const serverUptimeBase = ref(0)
 const lastPingTime = ref(Date.now())
 const now = useNow()
 const formattedTime = useDateFormat(now, 'YYYY-MM-DD HH:mm:ss')
 
 let timer: any = null
+let statusTimer: any = null
 
 async function checkConnection() {
   try {
     const res = await api.get('/api/ping')
-    connected.value = true
+    systemConnected.value = true
     if (res.data.ok && res.data.data.uptime) {
       serverUptimeBase.value = res.data.data.uptime
       lastPingTime.value = Date.now()
     }
   }
   catch {
-    connected.value = false
+    systemConnected.value = false
   }
 }
 
-function handleAccountSaved() {
-  accountStore.fetchAccounts()
+async function refreshStatus() {
+  if (currentAccount.value?.uin) {
+    await statusStore.fetchStatus(String(currentAccount.value.uin))
+  }
+}
+
+async function handleAccountSaved() {
+  await accountStore.fetchAccounts()
+  await refreshStatus()
   showAccountModal.value = false
   showRemarkModal.value = false
 }
@@ -53,11 +64,18 @@ onMounted(() => {
   accountStore.fetchAccounts()
   checkConnection()
   timer = setInterval(checkConnection, 30000)
+  statusTimer = setInterval(refreshStatus, 10000)
+})
+
+watch(currentAccount, () => {
+  refreshStatus()
 })
 
 onUnmounted(() => {
   if (timer)
     clearInterval(timer)
+  if (statusTimer)
+    clearInterval(statusTimer)
 })
 
 const uptime = computed(() => {
@@ -66,6 +84,57 @@ const uptime = computed(() => {
   const m = Math.floor((diff % 3600) / 60)
   const s = diff % 60
   return `${h}h ${m}m ${s}s`
+})
+
+const displayName = computed(() => {
+  const acc = currentAccount.value
+  if (!acc)
+    return '选择账号'
+
+  // 1. 优先显示实时状态中的昵称 (如果有且不是未登录)
+  if (status.value?.name && status.value.name !== '未登录') {
+    return status.value.name
+  }
+
+  // 2. 其次显示账号存储的备注名称 (name)
+  if (acc.name)
+    return acc.name
+
+  // 3. 最后显示UIN
+  return acc.uin
+})
+
+const connectionStatus = computed(() => {
+  if (!systemConnected.value) {
+    return {
+      text: '系统离线',
+      color: 'bg-red-500',
+      pulse: false,
+    }
+  }
+
+  if (!currentAccount.value?.uin) {
+    return {
+      text: '请添加账号',
+      color: 'bg-gray-400',
+      pulse: false,
+    }
+  }
+
+  const isConnected = status.value?.connection?.connected
+  if (isConnected) {
+    return {
+      text: '运行中',
+      color: 'bg-green-500',
+      pulse: true,
+    }
+  }
+
+  return {
+    text: '未连接',
+    color: 'bg-gray-400', // Or red? Old version uses gray/offline class which is gray usually
+    pulse: false,
+  }
 })
 
 const navItems = [
@@ -82,6 +151,8 @@ function selectAccount(acc: any) {
   accountStore.setCurrentAccount(acc)
   showAccountDropdown.value = false
 }
+
+const version = __APP_VERSION__
 </script>
 
 <template>
@@ -113,7 +184,7 @@ function selectAccount(acc: any) {
             </div>
             <div class="min-w-0 flex flex-col items-start">
               <span class="w-full truncate text-left text-sm font-medium">
-                {{ currentAccount?.nick || currentAccount?.name || currentAccount?.uin || '选择账号' }}
+                {{ displayName }}
               </span>
               <span class="w-full truncate text-left text-xs text-gray-400">
                 {{ currentAccount?.uin || '未选择' }}
@@ -148,7 +219,9 @@ function selectAccount(acc: any) {
                   >
                 </div>
                 <div class="min-w-0 flex flex-1 flex-col items-start">
-                  <span class="w-full truncate text-left text-sm font-medium">{{ acc.nick }}</span>
+                  <span class="w-full truncate text-left text-sm font-medium">
+                    {{ acc.name || acc.uin }}
+                  </span>
                   <span class="text-xs text-gray-400">{{ acc.uin }}</span>
                 </div>
                 <div class="flex items-center gap-1">
@@ -193,21 +266,13 @@ function selectAccount(acc: any) {
       <router-link
         v-for="item in navItems"
         :key="item.path"
-        v-slot="{ href, navigate, isActive, isExactActive }"
         :to="item.path"
-        custom
+        class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-600 transition-all duration-200 hover:bg-gray-50 dark:text-gray-400 hover:text-green-600 dark:hover:bg-gray-700/50 dark:hover:text-green-400"
+        :active-class="item.path === '/' ? '' : 'bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 font-medium shadow-sm ring-1 ring-green-500/10'"
+        :exact-active-class="item.path === '/' ? 'bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 font-medium shadow-sm ring-1 ring-green-500/10' : ''"
       >
-        <a
-          :href="href"
-          class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-600 transition-all duration-200 hover:bg-gray-50 dark:text-gray-400 hover:text-green-600 dark:hover:bg-gray-700/50 dark:hover:text-green-400"
-          :class="{
-            'bg-green-50 dark:bg-green-900/10 text-green-600 dark:text-green-400 font-medium shadow-sm ring-1 ring-green-500/10': item.path === '/' ? isExactActive : isActive,
-          }"
-          @click="navigate"
-        >
-          <div class="text-xl transition-transform duration-200 group-hover:scale-110" :class="[item.icon]" />
-          <span>{{ item.label }}</span>
-        </a>
+        <div class="text-xl transition-transform duration-200 group-hover:scale-110" :class="[item.icon]" />
+        <span>{{ item.label }}</span>
       </router-link>
     </nav>
 
@@ -215,14 +280,17 @@ function selectAccount(acc: any) {
     <div class="mt-auto border-t border-gray-100 bg-gray-50/50 p-4 dark:border-gray-700/50 dark:bg-gray-800/50">
       <div class="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
         <div class="flex items-center gap-1.5">
-          <div class="h-2 w-2 rounded-full" :class="connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'" />
-          <span>{{ connected ? '已连接' : '未连接' }}</span>
+          <div
+            class="h-2 w-2 rounded-full"
+            :class="[connectionStatus.color, { 'animate-pulse': connectionStatus.pulse }]"
+          />
+          <span>{{ connectionStatus.text }}</span>
         </div>
         <span>{{ uptime }}</span>
       </div>
       <div class="mt-1 flex items-center justify-between text-center text-xs text-gray-400 font-mono">
         <span>{{ formattedTime }}</span>
-        <span class="opacity-50">v1.0.0</span>
+        <span class="opacity-50">v{{ version }}</span>
       </div>
     </div>
   </aside>

@@ -124,7 +124,7 @@ function handleSaved() {
             </div>
             <div>
               <h3 class="text-lg font-bold">
-                {{ acc.nick || acc.name || acc.id }}
+                {{ acc.name || acc.id }}
               </h3>
               <div class="text-sm text-gray-500">
                 QQ: {{ acc.uin || '未绑定' }}
@@ -188,7 +188,7 @@ function handleSaved() {
       :show="showDeleteConfirm"
       :loading="deleteLoading"
       title="删除账号"
-      :message="accountToDelete ? `确定要删除账号 ${accountToDelete.nick || accountToDelete.name || accountToDelete.id} 吗?` : ''"
+      :message="accountToDelete ? `确定要删除账号 ${accountToDelete.name || accountToDelete.id} 吗?` : ''"
       confirm-text="删除"
       type="danger"
       @close="!deleteLoading && (showDeleteConfirm = false)"

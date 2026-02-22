@@ -16,7 +16,7 @@ const errorMessage = ref('')
 watch(() => props.show, (val) => {
   errorMessage.value = ''
   if (val && props.account) {
-    name.value = props.account.nick || props.account.name || ''
+    name.value = props.account.name || ''
   }
 })
 
@@ -26,10 +26,15 @@ async function save() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const res = await api.post('/api/accounts', {
+    // 使用 name 字段存储备注
+    const payload = {
       ...props.account,
-      nick: name.value,
-    })
+      name: name.value,
+    }
+    // 确保不发送 nick
+    delete payload.nick
+
+    const res = await api.post('/api/accounts', payload)
     if (res.data.ok) {
       emit('saved')
       emit('close')
